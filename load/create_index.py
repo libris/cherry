@@ -14,8 +14,8 @@ def create(**args):
     # check if index exists
     # Example: http://localhost:9200/ebok
     #url = 'http://%s:%d/%s/' % (args['server'], args['port'], args['index'])
-    url = 'http://localhost:9200/texts/'
-    #url = 'http://10.50.16.150:9200/{0}/'.format(args['index'])
+    #url = 'http://localhost:9200/texts/'
+    url = 'http://hp01.libris.kb.se:9200/xinfo_index/'
 
     if requests.get(url + '_stats').status_code == 200:
         if args['delete']:
@@ -25,7 +25,7 @@ def create(**args):
             #r = requests.delete(url + 'ebook/')
             #print '\nebook done', r.text
             r = requests.delete(url)
-            print '\nebook done', r.text
+            print '\nxcherry done', r.text
         else:
             print "Index exists, use --delete flag to force deletion before creation"
             exit(1)
