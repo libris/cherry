@@ -6,9 +6,9 @@ LIBRIS search hypothesis (MVP)
 
 Run a converter manually:
 
-    $ python -m converter.boktipset JSON_DATA_FILE
+    $ python -m convert.boktipset JSON_DATA_FILE
 
 Optionally, look at it as Turtle:
 
-    $ python -m converter.boktipset JSON_DATA_FILE | rdfpipe -ijson-ld:base=./,context=convert/context.jsonld -oturtle -
+    $ python -m convert.boktipset JSON_DATA_FILE | rdfpipe -ijson-ld:base=./,context=convert/context.jsonld -oturtle -
 
