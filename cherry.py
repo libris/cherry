@@ -37,10 +37,11 @@ JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 @app.route('/')
 @app.route('/search')
 def index():
-    return json.dumps("Välkommen")
+    return json.dumps("välkommen")
 
 @app.route('/api/search')
 def api_search():
+    print "search"
     q = request.args.get('q')
     sort = request.args.get('sort')
     n = 50
@@ -55,14 +56,14 @@ def api_search():
 #
 #        }
 #    } if q and q != '*' else { "match_all": {} }
-    qq = {
-          "common": {
-            "description": {
-              "query": q,
-              "cutoff_frequency": 0.001
-            }
-          }
-    } if q and q != '*' else { "match_all": {} }
+qq = {
+    "common": {
+        "description": {
+            "query": q,
+            "cutoff_frequency": 0.001
+        }
+    }
+} if q and q != '*' else { "match_all": {} }
 
     query = {
         #"_source" : ['highlight'],
@@ -71,24 +72,24 @@ def api_search():
 
         "query" : qq,
 
-      #  "filtered" : {
-      #      "filter": {
-      #          "match" : {}
-      #      }
-      #  },
+        #  "filtered" : {
+        #      "filter": {
+        #          "match" : {}
+        #      }
+        #  },
         "sort" : [
-             #   { "post_date" : {"order" : "asc"}},
-             #   "user",
-             #   { "name" : "desc" },
-                { "description" : "asc" },
-                "_score"
-            ],
+            #   { "post_date" : {"order" : "asc"}},
+            #   "user",
+            #   { "name" : "desc" },
+            { "description" : "asc" },
+            "_score"
+        ],
 
         "aggs" : {"room" : {"significant_terms" : {"field" : "description"}}},
 
         "highlight" : { "fields" : { "description" : {"type": "plain"}},
-                        "pre_tags" : ["1"],
-                        "post_tags" : ["1"],
+                       "pre_tags" : ["1"],
+                       "post_tags" : ["1"],
                        "fragment_size": 100
                       },
 
@@ -118,7 +119,7 @@ def api_search():
     }
 
 
- 
+
     if request.args.get('n'):
         print "n"
         n = int(request.args.get('n'))
@@ -144,6 +145,7 @@ def api_search():
     t0 = time.time()
     app.logger.debug("about to search")
     #HERE is the elastic search call
+    print "elastic", app.config['ELASTIC_URI']
     r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     app.logger.debug("did search {0}".format(time.time() - t0))
     return r.text
@@ -161,7 +163,7 @@ def api_search():
                 a = re.sub('<[^>]*>', '', s)
                 print a
                 #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
-                
+
         try:
             for ch, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
                 try:
@@ -172,8 +174,8 @@ def api_search():
                 except Exception as e:
                     app.logger.error("Highlights enumerate fail: {0}".format(e))
                     continue
-        except Exception as e:
-            app.logger.error("Hits enumeration failed: {0}".format(e))
+                except Exception as e:
+                    app.logger.error("Hits enumeration failed: {0}".format(e))
 
     #rtext["hits_total"] = rtext["hits"]["total"]
     #return jsonify(rtext)
@@ -186,6 +188,7 @@ def api_flt():
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
+    t = request.args.get('t')#filter by type of annotation
     n = 50
     filters = []
     date_filter = []
@@ -205,26 +208,39 @@ def api_flt():
         "size" : 75,
 
         "query" :  {"flt": {
-                "fields": ["summary"],
-                "like_text": q,
-                "max_query_terms": 12,
-                "prefix_length": 4
-    }},
+            "fields": ["summary"],
+            "like_text": q,
+            "max_query_terms": 12,
+            "prefix_length": 4
+        }},
 
-      #  "filtered" : {
-      #      "filter": {
-      #          "match" : {}
-      #      }
-      #  },
         "_source" :[],
-#        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
-#                        "pre_tags" : ["<1>"],
-#                        "post_tags" : ["<\/1>"],
-#                       "fragment_size": 100
-#                      },
+        #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
+        #                        "pre_tags" : ["<1>"],
+        #                        "post_tags" : ["<\/1>"],
+        #                       "fragment_size": 100
+        #                      },
         "aggs" : {"room" : {"significant_terms" : {"field" : "summary", "min_doc_count" : 3}}}, #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
 
 
+    }
+    if t:
+        query = {
+        "query": {
+            "filtered": {
+                "query": {
+                    "flt": {
+                        "fields": ["summary"],
+                        "like_text": q,
+                        "max_query_terms": 12,
+                        "prefix_length": 4
+                    }
+                },
+                "filter": {
+                    "and": [{ "type": { "value": t}},]
+                }
+            }
+        }
     }
 
     if request.args.get('n'):
