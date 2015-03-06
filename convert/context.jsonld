@@ -1,0 +1,20 @@
+{
+  "@context": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "dc": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "@vocab": "http://schema.org/",
+    "item": "foaf:primaryTopic",
+    "describedBy": {"@reverse": "about", "@container": "@set"},
+    "id": {"@id": "dc:identifier"},
+    "url": {"@type": "@id"},
+    "image": {"@type": "@id"},
+    "textHTML": {"@id": "text", "@type": "rdf:HTML"},
+    "isbn": {"@container": "@set"},
+    "genre": {"@container": "@set"},
+    "comment": {"@container": "@set"},
+    "review": {"@container": "@set"},
+    "workExample": {"@type": "@id", "@container": "@set"},
+    "isSimilarTo": {"@container": "@set"}
+  }
+}
