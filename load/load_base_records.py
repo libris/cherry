@@ -7,12 +7,23 @@ import requests
 def load_records():
     url = "http://hp01.libris.kb.se:9200/libris_index/bib/_search?pretty"
     query = {
+        "_source": [
+            "about.@id",
+            "about.attributedTo.*",
+            "about.author.*",
+            "about.instanceTitle.titleValue",
+            "about.classification.*",
+            "about.subject.*",
+            "about.identifier.identifierValue",
+        ],
         "query": {
             "term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
         }
     }
     ret = requests.post(url, data=json.dumps(query))
-    print ret.text
+    jres = json.loads(ret.text)
+    for hit in jres['hits']['hits']:
+        print "source", hit['_source']
 
 
 if __name__ == "__main__":
