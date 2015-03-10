@@ -15,6 +15,7 @@ def load_records():
             "about.classification.*",
             "about.subject.*",
             "about.identifier.identifierValue",
+            "about.publication.*",
         ],
         "query": {
             "term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
@@ -23,7 +24,7 @@ def load_records():
     ret = requests.post(url, data=json.dumps(query))
     jres = json.loads(ret.text)
     for hit in jres['hits']['hits']:
-        print "source", hit['_source']
+        print("source", hit['_source'])
 
 
 if __name__ == "__main__":
