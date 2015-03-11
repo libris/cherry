@@ -10,12 +10,11 @@ def load_records():
     query = {
         "_source": [
             "about.@id",
-            "about.attributedTo.*",
-            "about.author.*",
-            "about.instanceTitle.titleValue",
+            "about.creator.*",
+            "about.title",
             "about.classification.*",
             "about.subject.*",
-            "about.identifier.identifierValue",
+            "about.isbn",
             "about.publication.*",
         ],
         "query": {
@@ -43,7 +42,7 @@ def load_records():
         title = slugify(about.get('instanceTitle', {}).get('titleValue',''), to_lower=True, separator='')
         
         derivedFrom = 1
-        slugId = "/book/{name}/{title}".format(name=slugName, title=title)
+        slugId = "{name}{title}".format(name=slugName, title=title)
         print("slugId: {0}".format(slugId))
 
 
