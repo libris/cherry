@@ -22,7 +22,7 @@ def load_records():
         },
 
         "filter" : {
-            "exists" : { "field" : ["about.attributedTo", "about.instanceTitle"] }
+            "exists" : { "field" : ["about.creator", "about.title"] }
         }
 
     }
@@ -31,16 +31,16 @@ def load_records():
     for hit in jres['hits']['hits']:
         #print("source", hit['_source'])
         about = hit.get('_source').get('about', {})
-        print("about", about)
-        print("attributedTo:", about.get('attributedTo'))
-        attributedTo = about.get('attributedTo', {})
+        #print("about", about)
+        #print("creator:", about.get('creator'))
+        creator = about.get('creator', {})
 
-        name = "{0} {1}".format(attributedTo.get('givenName', ''), attributedTo.get('familyName', '')) if attributedTo.get('familyName') else "{0}".format(attributedTo.get('name', ''))
-        birthYear = attributedTo.get("birthYear", "")
+        name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
+        birthYear = creator.get("birthYear", "")
         slugName = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
-        print("instanceTitle", about.get('instanceTitle'))
-        title = slugify(about.get('instanceTitle', {}).get('titleValue',''), to_lower=True, separator='')
-        
+        print("title", about.get('title'))
+        title = slugify(about.get('title', {}).get('titleValue',''), to_lower=True, separator='')
+
         derivedFrom = 1
         slugId = "{name}{title}".format(name=slugName, title=title)
         print("slugId: {0}".format(slugId))
