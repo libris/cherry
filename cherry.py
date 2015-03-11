@@ -41,7 +41,7 @@ def index():
 
 @app.route('/api/search')
 def api_search():
-    print "search"
+    print("search")
     q = request.args.get('q')
     sort = request.args.get('sort')
     n = 50
@@ -56,14 +56,14 @@ def api_search():
 #
 #        }
 #    } if q and q != '*' else { "match_all": {} }
-qq = {
-    "common": {
-        "description": {
-            "query": q,
-            "cutoff_frequency": 0.001
+    qq = {
+        "common": {
+            "summary": {
+                "query": q,
+                "cutoff_frequency": 0.001
+            }
         }
-    }
-} if q and q != '*' else { "match_all": {} }
+    } if q and q != '*' else { "match_all": {} }
 
     query = {
         #"_source" : ['highlight'],
@@ -85,9 +85,9 @@ qq = {
             "_score"
         ],
 
-        "aggs" : {"room" : {"significant_terms" : {"field" : "description"}}},
+        "aggs" : {"room" : {"significant_terms" : {"field" : "summary"}}},
 
-        "highlight" : { "fields" : { "description" : {"type": "plain"}},
+        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
                        "pre_tags" : ["1"],
                        "post_tags" : ["1"],
                        "fragment_size": 100
@@ -121,12 +121,12 @@ qq = {
 
 
     if request.args.get('n'):
-        print "n"
+        print("n")
         n = int(request.args.get('n'))
         query['size'] = str(n)
 
     if request.args.get('page'):
-        print "page"
+        print("page")
         query['from'] = n * int(request.args.get('page'))
 
     if sort:
@@ -145,7 +145,7 @@ qq = {
     t0 = time.time()
     app.logger.debug("about to search")
     #HERE is the elastic search call
-    print "elastic", app.config['ELASTIC_URI']
+    print("elastic", app.config['ELASTIC_URI'])
     r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     app.logger.debug("did search {0}".format(time.time() - t0))
     return r.text
@@ -157,11 +157,11 @@ qq = {
         err['exception'] = r.text
         return json.dumps(err)
 
-    if -1:#rtext.get('hits', {}).get('hits', None):
+    if 0:#rtext.get('hits', {}).get('hits', None):
         for ch, hit in enumerate(rtext['hits']['hits']):
             for cs, s in enumerate(hit['highlight']['summary']):
                 a = re.sub('<[^>]*>', '', s)
-                print a
+                print(a)
                 #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
 
         try:
@@ -169,13 +169,13 @@ qq = {
                 try:
                     for cs, s in enumerate(hit.get('highlight', {}).get('about.fullTextContent.raw', [])):
                         a = re.sub('<[^>]*>', '', s)
-                        print a
+                        print(a)
                         #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
                 except Exception as e:
                     app.logger.error("Highlights enumerate fail: {0}".format(e))
                     continue
-                except Exception as e:
-                    app.logger.error("Hits enumeration failed: {0}".format(e))
+        except Exception as e:
+            app.logger.error("Hits enumeration failed: {0}".format(e))
 
     #rtext["hits_total"] = rtext["hits"]["total"]
     #return jsonify(rtext)
@@ -244,14 +244,14 @@ def api_flt():
     }
 
     if request.args.get('n'):
-        print "n"
+        print("n")
         n = int(request.args.get('n'))
         query['size'] = str(n)
 
     if request.args.get('page'):
-        print "page"
+        print("page")
         query['from'] = n * int(request.args.get('page'))
-        print "the from", query['from']
+        print("the from", query['from'])
 
 
 
@@ -342,6 +342,35 @@ def api_suggest():
 
     return json.dumps(rtext)
 
+
+@app.route('/api/related')
+def api_related():
+    print("related")
+    q = request.args.get('q')
+    precision = 'y'
+
+
+    query = {
+        "query" : { "filtered": { "filter": { "term": { "summary": q }}}},
+        "aggs" : {"room" : {"significant_terms" : {"field" : "summary"}}},
+    }
+
+
+    t0 = time.time()
+    app.logger.debug("about to search")
+    #HERE is the elastic search call
+    print("elastic", app.config['ELASTIC_URI'])
+    r = requests.post(app.config['ELASTIC_URI'] + '/_search?search_type=count', data = json.dumps(query))
+    app.logger.debug("did search {0}".format(time.time() - t0))
+
+    rtext = json.loads(r.text)
+    if rtext.get('status', 0):
+        app.logger.debug('error' + rtext.get('error'))
+        err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
+        err['exception'] = r.text
+        return json.dumps(err)
+
+    return json.dumps(rtext)
 
 @app.route('/api/json')
 def api_json():

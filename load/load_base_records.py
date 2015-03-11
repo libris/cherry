@@ -3,6 +3,7 @@
 
 import json
 import requests
+from slugify import slugify
 
 def load_records():
     url = "http://hp01.libris.kb.se:9200/libris_index/bib/_search?pretty"
@@ -18,15 +19,50 @@ def load_records():
             "about.publication.*",
         ],
         "query": {
-            "term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
+            "term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" },
+        },
+
+        "filter" : {
+            "exists" : { "field" : ["about.attributedTo", "about.instanceTitle"] }
         }
+
     }
     ret = requests.post(url, data=json.dumps(query))
     jres = json.loads(ret.text)
     for hit in jres['hits']['hits']:
-        print("source", hit['_source'])
+        #print("source", hit['_source'])
+        about = hit.get('_source').get('about', {})
+        print("about", about)
+        print("attributedTo:", about.get('attributedTo'))
+        attributedTo = about.get('attributedTo', {})
+
+        name = "{0} {1}".format(attributedTo.get('givenName', ''), attributedTo.get('familyName', '')) if attributedTo.get('familyName') else "{0}".format(attributedTo.get('name', ''))
+        birthYear = attributedTo.get("birthYear", "")
+        slugName = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
+        print("instanceTitle", about.get('instanceTitle'))
+        title = slugify(about.get('instanceTitle', {}).get('titleValue',''), to_lower=True, separator='')
+        
+        derivedFrom = 1
+        slugId = "/book/{name}/{title}".format(name=slugName, title=title)
+        print("slugId: {0}".format(slugId))
+
+
+
+
+        # Load recordslug from elastic
+        # Check fatvalue: count number of fields in new record and old record - enrich fattest record with any new fields in thinnest record§
+        # Combine record and save it
+        # Poppa popcorn
+        # Vin
+        # Yeah!
 
 
 if __name__ == "__main__":
     load_records()
-
+{
+    "constant_score" : {
+        "filter" : {
+            "exists" : { "field" : "user" }
+        }
+    }
+}
