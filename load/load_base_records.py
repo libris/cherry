@@ -5,6 +5,8 @@ import json
 import requests
 from slugify import slugify
 
+esurl = "http://localhost:9200"
+
 def load_records():
     url = "http://hp01.libris.kb.se:9200/libris_index/bib/_search?pretty"
     query = {
@@ -27,33 +29,59 @@ def load_records():
 
     }
     ret = requests.post(url, data=json.dumps(query))
+    docs = []
     jres = json.loads(ret.text)
     for hit in jres['hits']['hits']:
-        #print("source", hit['_source'])
-        about = hit.get('_source').get('about', {})
-        #print("about", about)
-        #print("creator:", about.get('creator'))
-        creator = about.get('creator', {})
+        xl_record = hit.get('_source').get('about', {})
+        xl_identifier = xl_record.pop("@id")
 
+        creator = xl_record.get('creator', [{}])[0]
         name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
         birthYear = creator.get("birthYear", "")
-        slugName = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
-        print("title", about.get('title'))
-        title = slugify(about.get('title', {}).get('titleValue',''), to_lower=True, separator='')
+        slug_name = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
 
-        derivedFrom = 1
-        slugId = "{name}{title}".format(name=slugName, title=title)
-        print("slugId: {0}".format(slugId))
+        slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
+
+        es_id = "{name}{title}".format(name=slug_name, title=slug_title)
+
+        cherry_record = load(es_id)
+        cherry_record = combine_record(cherry_record, xl_record)
+        cherry_record['@id'] = "/book/{name}/{title}".format(name=slug_name, title=slug_title)
+        cherry_record['derivedFrom'] = {"@id":xl_identifier}
+
+        docs += [ "{ \"index\" : { \"_id\" : \""+es_id+"\" }}" ]
+        docs += [ json.dumps(cherry_record) ]
+
+    bulk_store(docs)
 
 
-
-
-        # Load recordslug from elastic
         # Check fatvalue: count number of fields in new record and old record - enrich fattest record with any new fields in thinnest record§
         # Combine record and save it
         # Poppa popcorn
         # Vin
         # Yeah!
+
+
+def combine_record(old, new):
+    old.update(new)
+    return old
+
+def bulk_store(docs):
+    print("Saving to ES")
+    r = requests.put(esurl + '/cherry/book/_bulk', data='\n'.join(docs)+'\n')
+    print("Result of bulk:", r)
+
+def load(id):
+    url = "{baseurl}/cherry/book/{id}".format(baseurl=esurl, id=id)
+    response = requests.get(url)
+    record = {}
+    if response.status_code == 200:
+        record = json.loads(response.text).get("_source")
+    else:
+        print("URL {url} was a BAD REQUEST ({code})".format(url=url,code=response.status_code))
+    return record
+
+
 
 
 if __name__ == "__main__":
