@@ -15,6 +15,9 @@ def consume():
     print("Found {0} entries".format(len(entries)))
     for entry in entries:
         print("content", entry.findtext("{0}content".format(ATOM)))
+        # TODO: use lxml to parse content as HTML, iterating over each element extracting text nodes => markupfree data (with option to preserve line breaks
 
 if __name__ == "__main__":
     consume()
+
+
