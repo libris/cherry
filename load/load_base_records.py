@@ -7,6 +7,7 @@ from slugify import slugify
 
 esurl = "http://localhost:9200"
 
+
 def load_records():
     url = "http://hp01.libris.kb.se:9200/libris_index/bib/_search?pretty"
     query = {
@@ -55,15 +56,16 @@ def load_records():
     bulk_store(docs)
 
 
-        # Check fatvalue: count number of fields in new record and old record - enrich fattest record with any new fields in thinnest record§
-        # Combine record and save it
-        # Poppa popcorn
-        # Vin
-        # Yeah!
+    # Poppa popcorn
+    # Vin
+    # Yeah!
 
 
+# TODO: check which fields should be overwritten
 def combine_record(old, new):
+    isbn = old.get('isbn',[])
     old.update(new)
+    old['isbn'] += isbn
     return old
 
 def bulk_store(docs):
@@ -86,10 +88,3 @@ def load(id):
 
 if __name__ == "__main__":
     load_records()
-{
-    "constant_score" : {
-        "filter" : {
-            "exists" : { "field" : "user" }
-        }
-    }
-}
