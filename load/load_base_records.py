@@ -38,8 +38,10 @@ def load_records():
 
         creator = xl_record.get('creator', [{}])[0]
         name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
-        birthYear = creator.get("birthYear", "")
-        slug_name = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
+        #birthYear = creator.get("birthYear", "")
+        #slug_name = slugify("{0} {1}".format(name, birthYear), to_lower=True, separator='')
+        # Adding year to identifier breeds possibility for duplicate records.
+        slug_name = slugify(name, to_lower=True, separator='')
 
         slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
 
