@@ -3,11 +3,11 @@
 
 import json
 import requests
-import itertools
 from slugify import slugify
 
 esurl = "http://localhost:9200"
-xlhost = "http://hp01.libris.kb.se:9200"
+xlhost = "http://localhost:9400"
+#xlhost = "http://hp01.libris.kb.se:9200"
 
 
 def load_records():
@@ -34,12 +34,15 @@ def load_records():
                     { "exists": { "field": "about.title" } },
                     { "exists": { "field": "about.isbn" } }
                 ],
-                "should": [
-                    { "terms": { "about.literaryForm.@id" : ["/def/enum/content/Fiction","/def/enum/content/FictionNotFurtherSpecified"] } }
-                ],
                 "must_not": [
-                    { "terms": { "about.language.@id" : [ "/def/languages/fin", "/dev/languages/dan", "/dev/languages/nor"] } }
-                ]
+                    { "term": { "about.literaryForm.@id" : "/def/enum/content/NotFictionNotFurtherSpecified" } }
+                ],
+                #"should": [
+                #    { "terms": { "about.literaryForm.@id" : ["/def/enum/content/Fiction","/def/enum/content/FictionNotFurtherSpecified"] } }
+                #],
+                #"must_not": [
+                #    { "terms": { "about.language.@id" : [ "/def/languages/fin", "/dev/languages/dan", "/dev/languages/nor"] } }
+                #]
             }
         }
     }
