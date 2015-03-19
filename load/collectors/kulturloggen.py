@@ -4,6 +4,7 @@
 from .blog import *
 
 if __name__ == "__main__":
-    consume("http://feelgoodbiblioteket.com/feed/atom/", {'Accept': 'application/atom+xml'})
+    consume("http://feeds.feedburner.com/Kulturloggen", {'Accept': 'application/atom+xml'})
+
 
 
