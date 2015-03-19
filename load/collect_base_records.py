@@ -4,6 +4,7 @@
 import json
 import requests
 from slugify import slugify
+from .save_data import *
 
 esurl = "http://localhost:9200"
 xlhost = "http://localhost:9400"
@@ -82,7 +83,7 @@ def load_records():
 
                 docs[es_id] = cherry_record
 
-            bulk_store(docs)
+            bulk_store(docs, esurl + '/cherry/book/_bulk')
 
     # Poppa popcorn
     # Vin
@@ -107,12 +108,6 @@ def combine_record(old, new):
     else:
         old["derivedFrom"] = [{"@id":xl_identifier}]
     return old
-
-def bulk_store(docs):
-    print("Saving {0} documents to ES".format(len(docs)))
-    bulkdata = ["{ \"index\" : { \"_id\" : \""+es_id+"\" }}\n"+json.dumps(cherry_record) for (es_id, cherry_record) in docs.items()]
-    r = requests.put(esurl + '/cherry/book/_bulk', data='\n'.join(bulkdata)+'\n')
-    #print("Result of bulk:", r)
 
 def load(id):
     url = "{baseurl}/cherry/book/{id}".format(baseurl=esurl, id=id)
