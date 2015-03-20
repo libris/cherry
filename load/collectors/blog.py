@@ -41,7 +41,7 @@ def consume(url, headers={}):
         next_link_elements = xml_root.findall("{0}link[@rel='next']".format(ATOM))
         next_page = next_link_elements[0].get("href") if len(next_link_elements) > 0 else None
 
-        if len(entries) == 0 or page == 2:
+        if len(entries) == 0:
             print("All posts consumed. Saving ...")
             bulk_store(docs, CHERRY_ES_URL)
             break
