@@ -101,12 +101,12 @@ def combine_record(old, new):
     old.update(new)
     if isbn:
         old['isbn'] = isbn
-    if 'derivedFrom' in old:
-        derives = set([der['@id'] for der in old['derivedFrom']])
+    if 'wasDerivedFrom' in old:
+        derives = set([der['@id'] for der in old['wasDerivedFrom']])
         derives.add(xl_identifier)
-        old["derivedFrom"] = [{"@id":xlid} for xlid in derives]
+        old["wasDerivedFrom"] = [{"@id":xlid} for xlid in derives]
     else:
-        old["derivedFrom"] = [{"@id":xl_identifier}]
+        old["wasDerivedFrom"] = [{"@id":xl_identifier}]
     return old
 
 def load(id):
