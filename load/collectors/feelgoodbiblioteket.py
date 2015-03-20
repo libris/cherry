@@ -4,6 +4,6 @@
 from .blog import *
 
 if __name__ == "__main__":
-    consume("http://feelgoodbiblioteket.com/feed/atom/", {'Accept': 'application/atom+xml'})
+    consume("http://feelgoodbiblioteket.com/feed/atom/?page={page}", {'Accept': 'application/atom+xml'})
 
 

@@ -14,7 +14,6 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 def consume(url, headers={}):
     page = 0
     docs = {}
-    url = url + "?paged={page}"
     cleaner = Cleaner()
     cleaner.javascript = True
     cleaner.style = True
@@ -28,7 +27,7 @@ def consume(url, headers={}):
         blog_subtitle = xml_root.findtext("{0}subtitle".format(ATOM))
 
         entries = xml_root.findall("{0}entry".format(ATOM))
-        if len(entries) == 0 or page == 2:
+        if len(entries) == 0: #or page == 2:
             bulk_store(docs, "http://localhost:9200/cherry/blog/_bulk")
             break
 
@@ -36,9 +35,7 @@ def consume(url, headers={}):
         for entry in entries:
             try:
                 entry_title = lxml.html.document_fromstring(entry.findtext("{0}title".format(ATOM))).text_content()
-                #entry_id = entry.findtext("{0}id".format(ATOM))
-                # TODO: Fix this! Find a common way to extract referred url
-                entry_id = entry.find("{0}link".format(ATOM)).get("href")
+                entry_id = entry.findtext("{0}id".format(ATOM))
                 content = entry.find("{0}content".format(ATOM))
                 entry_content = lxml.html.document_fromstring(cleaner.clean_html(content.text)).text_content()
                 categories = [c.get("term") for c in entry.findall("{0}category".format(ATOM)) if c.get("term") != "Uncategorized"]
