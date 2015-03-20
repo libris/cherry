@@ -10,6 +10,7 @@ from lxml import etree
 from ..save_data import *
 
 ATOM = "{http://www.w3.org/2005/Atom}"
+CHERRY_ES_URL = "http://localhost:9200/cherry/blog/_bulk"
 
 def consume(url, headers={}):
     page = 0
@@ -17,28 +18,41 @@ def consume(url, headers={}):
     cleaner = Cleaner()
     cleaner.javascript = True
     cleaner.style = True
+    next_page = None
     while True:
         page += 1
-        res = requests.get(url.format(page=page), stream=True, timeout=3600, headers=headers)
+        if not next_page:
+            next_page = url.format(page=page)
+        if page > 1 and next_page == url:
+            print("Failure casued looping. Saving documents and breaking.")
+            bulk_store(docs, CHERRY_ES_URL)
+            break
+
+        res = requests.get(next_page, stream=True, timeout=3600, headers=headers)
 
         xml_root = etree.parse(res.raw)
 
         blog_title = xml_root.findtext("{0}title".format(ATOM))
         blog_subtitle = xml_root.findtext("{0}subtitle".format(ATOM))
 
+        next_link_elements = xml_root.findall("{0}link[@rel='next']".format(ATOM))
+
         entries = xml_root.findall("{0}entry".format(ATOM))
-        if len(entries) == 0: #or page == 2:
-            bulk_store(docs, "http://localhost:9200/cherry/blog/_bulk")
+        print("Found {0} entries on page {1}".format(len(entries), next_page))
+        next_page = next_link_elements[0].get("href") if len(next_link_elements) > 0 else None
+
+        if len(entries) == 0:
+            print("All posts consumed. Saving ...")
+            bulk_store(docs, CHERRY_ES_URL)
             break
 
-        print("Found {0} entries on page {1}".format(len(entries), page))
         for entry in entries:
             try:
                 entry_title = lxml.html.document_fromstring(entry.findtext("{0}title".format(ATOM))).text_content()
                 entry_id = entry.findtext("{0}id".format(ATOM))
                 content = entry.find("{0}content".format(ATOM))
                 entry_content = lxml.html.document_fromstring(cleaner.clean_html(content.text)).text_content()
-                categories = [c.get("term") for c in entry.findall("{0}category".format(ATOM)) if c.get("term") != "Uncategorized"]
+                categories = [c.get("term") for c in entry.findall("{0}category".format(ATOM))]
 
                 jsonld = {}
                 jsonld['@type'] = "BlogPosting"
@@ -53,5 +67,4 @@ def consume(url, headers={}):
                 docs[elastic_id] = jsonld
             except lxml.etree.XMLSyntaxError as ex:
                 print("Problem on page {0}: {1}".format(page, ex))
-
 
