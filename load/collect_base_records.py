@@ -7,8 +7,8 @@ from slugify import slugify
 from .save_data import *
 
 esurl = "http://localhost:9200"
-xlhost = "http://localhost:9400"
-#xlhost = "http://hp01.libris.kb.se:9200"
+#xlhost = "http://localhost:9400"
+xlhost = "http://hp01.libris.kb.se:9200"
 
 
 def load_records():
