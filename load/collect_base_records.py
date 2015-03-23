@@ -15,15 +15,19 @@ def load_records():
     url = xlhost + "/libris_index/bib/_search?search_type=scan&scroll=1m"
     query = {
         "size": 1000,
-        "_source": [
-            "about.@id",
-            "about.creator.*",
-            "about.title",
-            "about.classification.*",
-            "about.subject.*",
-            "about.isbn",
-            "about.publication.*"
-        ],
+        "_source": {
+            "include": [
+                "about.@id",
+                "about.creator.*",
+                "about.title",
+                "about.classification.*",
+                "about.subject.*",
+                "about.isbn",
+                "about.publication.*"
+            ],
+            "exclude": [,
+                "about.subject.broader"
+            ],
         "query": {
             #"term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
             "match_all" : {}
