@@ -8,7 +8,7 @@ import requests
 
 def create(**args):
 
-    base_url = 'http://localhost:9200'
+    base_url = "http://{server}:{port}".format(server=args['server'], port=args['port'])
 
     url = base_url + '/' + args['index']
 
