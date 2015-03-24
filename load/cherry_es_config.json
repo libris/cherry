@@ -1,0 +1,352 @@
+{
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "autocomplete": {
+                    "filter": [
+                        "standard",
+                        "lowercase",
+                        "autocomplete_filter"
+                    ],
+                    "tokenizer": "standard",
+                    "type": "custom"
+                },
+                "fulltext_analyzer": {
+                    "filter": [
+                        "standard",
+                        "lowercase",
+                        "type_as_payload"
+                    ],
+                    "tokenizer": "standard",
+                    "type": "custom"
+                }
+            },
+            "filter": {
+                "autocomplete_filter": {
+                    "max_gram": 50,
+                    "min_gram": 2,
+                    "type": "edge_ngram"
+                }
+            }
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "@id": {
+                    "include_in_all": false,
+                    "index": "not_analyzed",
+                    "store": true,
+                    "type": "string"
+                },
+                "@type": {
+                    "include_in_all": false,
+                    "index": "not_analyzed",
+                    "store": true,
+                    "type": "string"
+                },
+                "text": {
+                    "index_analyzer": "fulltext_analyzer",
+                    "store": true,
+                    "term_vector": "with_positions_offsets_payloads",
+                    "type": "string"
+                }
+            }
+        },
+        "annotation": {
+            "_parent": {
+                "type": "book"
+            },
+            "properties": {
+                "annotationSource": {
+                    "properties": {
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "name": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        },
+        "blog": {
+            "_parent": {
+                "type": "book"
+            },
+            "properties": {
+                "isPartOf": {
+                    "properties": {
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "name": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": false,
+                            "store": true,
+                            "type": "string"
+                        },
+                        "url": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": false,
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "keywords": {
+                    "fields": {
+                        "raw": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "include_in_all": true,
+                    "store": true,
+                    "type": "string"
+                },
+                "name": {
+                    "fields": {
+                        "raw": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "include_in_all": false,
+                    "store": true,
+                    "type": "string"
+                },
+                "url": {
+                    "fields": {
+                        "raw": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "include_in_all": false,
+                    "store": true,
+                    "type": "string"
+                }
+            }
+        },
+        "record": {
+            "properties": {
+                "classification": {
+                    "properties": {
+                        "@id": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "inScheme": {
+                            "properties": {
+                                "@id": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                },
+                                "@type": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                },
+                                "notation": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                }
+                            },
+                            "type": "nested"
+                        },
+                        "notation": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "prefLabel": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "creator": {
+                    "properties": {
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "birthYear": {
+                            "format": "year",
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "date"
+                        },
+                        "deathYear": {
+                            "format": "year",
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "date"
+                        },
+                        "familyName": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        },
+                        "givenName": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        },
+                        "name": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "isbn": {
+                    "fields": {
+                        "raw": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "include_in_all": true,
+                    "store": true,
+                    "type": "string"
+                },
+                "subject": {
+                    "properties": {
+                        "@id": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "broader": {
+                            "properties": {
+                                "@id": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                },
+                                "prefLabel": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "inScheme": {
+                            "properties": {
+                                "@id": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                },
+                                "@type": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                },
+                                "notation": {
+                                    "include_in_all": false,
+                                    "index": "not_analyzed",
+                                    "store": true,
+                                    "type": "string"
+                                }
+                            },
+                            "type": "nested"
+                        }
+                    },
+                    "type": "object"
+                },
+                "title": {
+                    "fields": {
+                        "raw": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "include_in_all": true,
+                    "store": true,
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
