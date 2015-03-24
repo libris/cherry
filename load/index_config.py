@@ -111,6 +111,15 @@ def create_config(index, shards=10, replicas=1):
                         "store" : "true",
                         "index_analyzer" : "fulltext_analyzer"
                     },
+                    "parentCandidate": {
+                        'type': 'object',
+                        'properties' : {
+                            'title': { 'type' : 'string', 'store' : 'true', 'include_in_all' : 'false'},
+                            'creator': { 'type' : 'string', 'store' : 'true', 'include_in_all' : 'false'},
+                            'year': { 'type' : 'date', 'format': 'year',  'index' : 'not_analyzed', 'store' : 'true', 'include_in_all' : 'false' },
+                            '@id': { 'type' : 'string',  'index' : 'not_analyzed', 'store' : 'true', 'include_in_all' : 'false' },
+                        }
+                    },
                     "_parent": {"type": "record"}
                 }
             }
