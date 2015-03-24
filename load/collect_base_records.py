@@ -8,7 +8,7 @@ from .save_data import *
 
 esurl = "http://localhost:9200"
 #xlhost = "http://localhost:9400"
-xlhost = "http://hp01.libris.kb.se:9200"
+xlhost = "http://hp03.libris.kb.se:9200"
 
 
 def load_records():
@@ -25,9 +25,10 @@ def load_records():
                 "about.isbn",
                 "about.publication.*"
             ],
-            "exclude": [,
+            "exclude": [
                 "about.subject.broader"
-            ],
+            ]
+        },
         "query": {
             #"term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
             "match_all" : {}
@@ -39,9 +40,24 @@ def load_records():
                     { "exists": { "field": "about.title" } },
                     { "exists": { "field": "about.isbn" } }
                 ],
-                "must_not": [
-                    { "term": { "about.literaryForm.@id" : "/def/enum/content/NotFictionNotFurtherSpecified" } }
+                "must": [
+                    { "terms": { "about.language.@id" : [ "/def/languages/swe" ] } }
                 ],
+                "must": [
+                    { "or" : [
+                        { "or" : [
+                            { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "H" } } } },
+                            { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "8" } } } }
+                        ] },
+                        { "and": [
+                            { "not" : { "term": { "about.literaryForm.@id": "/def/enum/content/NotFictionNotFurtherSpecified" } } },
+                            { "not" : { "exists": { "field": "about.classification" } } }
+                        ] }
+                    ] }
+                ]
+                #"must_not": [
+                #    { "term": { "about.literaryForm.@id" : "/def/enum/content/NotFictionNotFurtherSpecified" } }
+                #],
                 #"should": [
                 #    { "terms": { "about.literaryForm.@id" : ["/def/enum/content/Fiction","/def/enum/content/FictionNotFurtherSpecified"] } }
                 #],
