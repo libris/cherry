@@ -53,9 +53,49 @@
                 }
             }
         },
+        "excerpt": {
+            "_parent": {
+                "type": "record"
+            },
+            "properties": {
+                "annotationSource": {
+                    "properties": {
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "name": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        },
+                        "url": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": false,
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        },
         "annotation": {
             "_parent": {
-                "type": "book"
+                "type": "record"
             },
             "properties": {
                 "annotationSource": {
@@ -84,7 +124,7 @@
         },
         "blog": {
             "_parent": {
-                "type": "book"
+                "type": "record"
             },
             "properties": {
                 "isPartOf": {
@@ -211,6 +251,12 @@
                 },
                 "creator": {
                     "properties": {
+                        "@id": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
                         "@type": {
                             "include_in_all": false,
                             "index": "not_analyzed",
