@@ -8,7 +8,7 @@ from .save_data import *
 
 esurl = "http://localhost:9200"
 #xlhost = "http://localhost:9400"
-xlhost = "http://hp03.libris.kb.se:9200"
+xlhost = "http://hp02.libris.kb.se:9200"
 
 
 def load_records():
@@ -30,7 +30,6 @@ def load_records():
             ]
         },
         "query": {
-            #"term" : { "about.identifier.identifierScheme.@id" : "/def/identifiers/isbn" }
             "match_all" : {}
         },
         "filter" : {
@@ -55,15 +54,6 @@ def load_records():
                         ] }
                     ] }
                 ]
-                #"must_not": [
-                #    { "term": { "about.literaryForm.@id" : "/def/enum/content/NotFictionNotFurtherSpecified" } }
-                #],
-                #"should": [
-                #    { "terms": { "about.literaryForm.@id" : ["/def/enum/content/Fiction","/def/enum/content/FictionNotFurtherSpecified"] } }
-                #],
-                #"must_not": [
-                #    { "terms": { "about.language.@id" : [ "/def/languages/fin", "/dev/languages/dan", "/dev/languages/nor"] } }
-                #]
             }
         }
     }
@@ -83,7 +73,7 @@ def load_records():
         print("Number of docs in batch {0}: {1}".format(batch_count, num_docs_in_batch))
         batch_count += 1
         if num_docs_in_batch == 0:
-            print("Breaking")
+            print("All documents loaded. Breaking.")
             scrolling = False
         else:
             for hit in jres['hits']['hits']:
@@ -135,12 +125,7 @@ def load(id):
     record = {}
     if response.status_code == 200:
         record = json.loads(response.text).get("_source")
-    #else:
-    #    print("URL {url} was a BAD REQUEST ({code})".format(url=url,code=response.status_code))
     return record
-
-
-
 
 if __name__ == "__main__":
     load_records()

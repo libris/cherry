@@ -25,7 +25,7 @@ def create(**args):
     cf = open('load/cherry_es_config.json','r')
     ret = requests.put(url, data=cf.read())
 
-    print("{0} create result: {1}".format(args['index'], ret.text))
+    print("create {0} result: {1}".format(args['index'], ret.text))
 
 
 if __name__ == "__main__":
