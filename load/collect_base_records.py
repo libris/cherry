@@ -99,11 +99,11 @@ def load_records():
 
                 cherry_record = docs.get(es_id, load(es_id))
                 cherry_record = combine_record(cherry_record, xl_record)
-                cherry_record['@id'] = "/book/{name}/{title}".format(name=slug_name, title=slug_title)
+                cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
 
                 docs[es_id] = cherry_record
 
-            bulk_store(docs, esurl + '/cherry/book/_bulk')
+            bulk_store(docs, esurl + '/cherry/record/_bulk')
 
     # Poppa popcorn
     # Vin
@@ -130,7 +130,7 @@ def combine_record(old, new):
     return old
 
 def load(id):
-    url = "{baseurl}/cherry/book/{id}".format(baseurl=esurl, id=id)
+    url = "{baseurl}/cherry/record/{id}".format(baseurl=esurl, id=id)
     response = requests.get(url)
     record = {}
     if response.status_code == 200:
