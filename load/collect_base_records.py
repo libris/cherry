@@ -69,7 +69,7 @@ def load_records(**args):
         es_id = "{name}{title}".format(name=slug_name, title=slug_title)
 
         try:
-            cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id))
+            cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id).get('_source'))
         except NotFoundError:
             cherry_record = {}
 
