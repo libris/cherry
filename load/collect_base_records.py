@@ -72,21 +72,24 @@ def load_records(**args):
             cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id))
         except NotFoundError:
             cherry_record = {}
+
         cherry_record = combine_record(cherry_record, xl_record)
         cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
 
         docs[es_id] = cherry_record
         batch_count += 1
         if batch_count % 1000 == 0:
-            print("Saving {0} documents to ES".format(len(docs)))
+            print("Batch full. Saving {0} documents to ES".format(len(docs)))
             bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             r = bulk(to_es, bulkdata)
             docs = {}
 
     if len(docs) > 0:
-        print("Saving {0} documents to ES".format(len(docs)))
+        print("Collection complete. Saving {0} documents to ES".format(len(docs)))
         bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
         r = bulk(to_es, bulkdata)
+
+    print("Totally {0} documents collected (some might have been deduped).".format(batch_count))
 
     # Poppa popcorn
     # Vin
