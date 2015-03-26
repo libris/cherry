@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-import requests
+import argparse
 from slugify import slugify
-from .save_data import *
+from elasticsearch import Elasticsearch, NotFoundError
+from elasticsearch.helpers import bulk, scan
 
-esurl = "http://localhost:9200"
-#xlhost = "http://localhost:9400"
-xlhost = "http://hp02.libris.kb.se:9200"
+def load_records(**args):
+    from_es = Elasticsearch(args['from'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    to_es = Elasticsearch(args['to'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
-
-def load_records():
-    url = xlhost + "/libris_index/bib/_search?search_type=scan&scroll=1m"
     query = {
         "size": 1000,
         "_source": {
@@ -57,43 +54,39 @@ def load_records():
             }
         }
     }
-    ret = requests.post(url, data=json.dumps(query))
-    jres = json.loads(ret.text)
-    print("ES query resulted in {0} hits. Starting scroll/scan.".format(jres['hits']['total']))
 
-    scroll_id = jres['_scroll_id']
-    scrolling = True
     batch_count = 0
-    while scrolling:
-        docs = {}
-        ret = requests.post(xlhost+"/_search/scroll?scroll=1m", data=scroll_id)
-        jres = json.loads(ret.text)
-        scroll_id = jres['_scroll_id']
-        num_docs_in_batch = len(jres['hits'].get('hits', []))
-        print("Number of docs in batch {0}: {1}".format(batch_count, num_docs_in_batch))
+    docs = {}
+    for hit in scan(from_es, query, index='libris_index', doc_type='bib'):
+        xl_record = hit.get('_source').get('about', {})
+
+        creator = xl_record.get('creator', [{}])[0]
+        name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
+        slug_name = slugify(name, to_lower=True, separator='')
+
+        slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
+
+        es_id = "{name}{title}".format(name=slug_name, title=slug_title)
+
+        try:
+            cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id))
+        except NotFoundError:
+            cherry_record = {}
+        cherry_record = combine_record(cherry_record, xl_record)
+        cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
+
+        docs[es_id] = cherry_record
         batch_count += 1
-        if num_docs_in_batch == 0:
-            print("All documents loaded. Breaking.")
-            scrolling = False
-        else:
-            for hit in jres['hits']['hits']:
-                xl_record = hit.get('_source').get('about', {})
+        if batch_count % 1000 == 0:
+            print("Saving {0} documents to ES".format(len(docs)))
+            bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            r = bulk(to_es, bulkdata)
+            docs = {}
 
-                creator = xl_record.get('creator', [{}])[0]
-                name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
-                slug_name = slugify(name, to_lower=True, separator='')
-
-                slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
-
-                es_id = "{name}{title}".format(name=slug_name, title=slug_title)
-
-                cherry_record = docs.get(es_id, load(es_id))
-                cherry_record = combine_record(cherry_record, xl_record)
-                cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
-
-                docs[es_id] = cherry_record
-
-            bulk_store(docs, esurl + '/cherry/record/_bulk')
+    if len(docs) > 0:
+        print("Saving {0} documents to ES".format(len(docs)))
+        bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+        r = bulk(to_es, bulkdata)
 
     # Poppa popcorn
     # Vin
@@ -119,13 +112,14 @@ def combine_record(old, new):
         old["wasDerivedFrom"] = [{"@id":xl_identifier}]
     return old
 
-def load(id):
-    url = "{baseurl}/cherry/record/{id}".format(baseurl=esurl, id=id)
-    response = requests.get(url)
-    record = {}
-    if response.status_code == 200:
-        record = json.loads(response.text).get("_source")
-    return record
-
 if __name__ == "__main__":
-    load_records()
+    parser = argparse.ArgumentParser(description='Loads base records from LIBRISXL for cherry')
+    parser.add_argument('--from', help='Elastic URL to read data from, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--to', help='Elastic URL to write data to, default to localhost', default='localhost', nargs='+')
+
+    try:
+        args = vars(parser.parse_args())
+    except:
+        exit(1)
+
+    load_records(**args)
