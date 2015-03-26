@@ -390,6 +390,16 @@
                     },
                     "type": "object"
                 },
+                "wasDerivedFrom": {
+                    "properties": {
+                        "@id": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        }
+                    }
+                },
                 "title": {
                     "fields": {
                         "raw": {
