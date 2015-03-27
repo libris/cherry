@@ -16,6 +16,7 @@ blogs = {
     "fiktiviteter" : "http://www.fiktiviteter.se/feed/atom/?paged={page}",
     "kulturloggen" : "http://feeds.feedburner.com/Kulturloggen",
     "nellas" : "http://nellasbocker.blogspot.se/feeds/posts/default",
+    "lyrans" : "http://www.lyransnoblesser.se/feeds/posts/default",
 }
 
 
@@ -87,6 +88,8 @@ def consume(url, server):
                 docs[elastic_id] = jsonld
             except lxml.etree.XMLSyntaxError as ex:
                 print("Problem on page {0}: {1}".format(page, ex))
+            except AttributeError:
+                print("attribute error for content:", content)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads blog posts into cherry')
