@@ -1,18 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
+import argparse
 import requests
 import lxml.html
 from lxml.html.clean import Cleaner
 import base64
 from lxml import etree
-from ..save_data import *
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 
 ATOM = "{http://www.w3.org/2005/Atom}"
-CHERRY_ES_URL = "http://localhost:9200/cherry/blog/_bulk"
+blogs = {
+    "feelgoodbiblioteket" : "http://feelgoodbiblioteket.com/feed/atom/?paged={page}",
+    "fiktiviteter" : "http://www.fiktiviteter.se/feed/atom/?paged={page}",
+    "kulturloggen" : "http://feeds.feedburner.com/Kulturloggen",
+    "nellas" : "http://nellasbocker.blogspot.se/feeds/posts/default",
+}
 
-def consume(url, headers={}):
+
+def consume(url, server):
+    print("Consuming blog from ", url)
+    es = Elasticsearch(server, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
     page = 0
     docs = {}
     cleaner = Cleaner(javascript=True, style=True)
@@ -23,10 +32,11 @@ def consume(url, headers={}):
             next_page = url.format(page=page)
         if page > 1 and next_page == url:
             print("Failure casued looping. Saving documents and breaking.")
-            bulk_store(docs, CHERRY_ES_URL)
+            bulkdata = [ { '_index': 'cherry', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            bulk(es, bulkdata)
             break
 
-        res = requests.get(next_page, stream=True, timeout=3600, headers=headers)
+        res = requests.get(next_page, stream=True, timeout=3600, headers={'Accept': 'application/atom+xml'})
 
         xml_root = etree.parse(res.raw)
 
@@ -43,8 +53,11 @@ def consume(url, headers={}):
 
         if len(entries) == 0:
             print("All posts consumed. Saving ...")
-            bulk_store(docs, CHERRY_ES_URL)
+            bulkdata = [ { '_index': 'cherry', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            r = bulk(es, bulkdata)
+            print("save result", r)
             break
+
 
         for entry in entries:
             try:
@@ -75,3 +88,16 @@ def consume(url, headers={}):
             except lxml.etree.XMLSyntaxError as ex:
                 print("Problem on page {0}: {1}".format(page, ex))
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Loads blog posts into cherry')
+    parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--blog', help='Which blog to load. Available are: %s or \'all\'' % list(blogs.keys()), required=True)
+
+    try:
+        args = vars(parser.parse_args())
+    except:
+        exit(1)
+
+    urls = list(blogs.values()) if args['blog'] == 'all' else [blogs[args['blog']]]
+    for url in urls:
+        consume(url, args['server'])

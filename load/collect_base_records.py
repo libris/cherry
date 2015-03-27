@@ -78,12 +78,13 @@ def load_records(**args):
 
         docs[es_id] = cherry_record
         batch_count += 1
-        if batch_count % 1000 == 0:
+        if batch_count % 2000 == 0:
             print("Batch full. Saving {0} documents to ES".format(len(docs)))
             bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             r = bulk(to_es, bulkdata)
             docs = {}
 
+    # Save remaining docs
     if len(docs) > 0:
         print("Collection complete. Saving {0} documents to ES".format(len(docs)))
         bulkdata = [ { '_index': 'cherry', '_type': 'record', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]

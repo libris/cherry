@@ -123,9 +123,6 @@
             }
         },
         "blog": {
-            "_parent": {
-                "type": "record"
-            },
             "properties": {
                 "isPartOf": {
                     "properties": {
