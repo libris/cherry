@@ -94,13 +94,19 @@ def consume(url, server):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads blog posts into cherry')
     parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
-    parser.add_argument('--blog', help='Which blog to load. Available are: %s or \'all\'' % list(blogs.keys()), required=True)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--blog', help='Which blog to load. Available are: %s or \'all\'' % list(blogs.keys()))
+    group.add_argument('--feed', help='Load atom data from feed')
+
 
     try:
         args = vars(parser.parse_args())
     except:
         exit(1)
 
-    urls = list(blogs.values()) if args['blog'] == 'all' else [blogs[args['blog']]]
-    for url in urls:
-        consume(url, args['server'])
+    if args['blog']:
+        urls = list(blogs.values()) if args['blog'] == 'all' else [blogs[args['blog']]]
+        for url in urls:
+            consume(url, args['server'])
+    else:
+        consume(args['feed'], args['server'])
