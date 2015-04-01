@@ -57,26 +57,28 @@ def load_records(**args):
 
     batch_count = 0
     docs = {}
-    for hit in scan(from_es, query, index='libris_index', doc_type='bib'):
+    for hit in scan(from_es, query, index=args['xlindex'], doc_type=args['xltype']):
         xl_record = hit.get('_source').get('about', {})
+        if 'creator' in xl_record:
+            creator = xl_record['creator'] if type(xl_record['creator']) is list else [xl_record['creator']]
 
-        creator = xl_record.get('creator', [{}])[0]
-        name = "{0} {1}".format(creator.get('givenName', ''), creator.get('familyName', '')) if creator.get('familyName') else "{0}".format(creator.get('name', ''))
-        slug_name = slugify(name, to_lower=True, separator='')
+            name = "{0} {1}".format(creator[0].get('givenName', ''), creator[0].get('familyName', '')) if creator[0].get('familyName') else "{0}".format(creator[0].get('name', ''))
+            slug_name = slugify(name, to_lower=True, separator='')
 
-        slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
+            slug_title = slugify(xl_record.get('title', ''), to_lower=True, separator='')
 
-        es_id = "{name}{title}".format(name=slug_name, title=slug_title)
+            es_id = "{name}{title}".format(name=slug_name, title=slug_title)
 
-        try:
-            cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id).get('_source'))
-        except NotFoundError:
-            cherry_record = {}
+            try:
+                cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id).get('_source'))
+            except NotFoundError:
+                cherry_record = {}
 
-        cherry_record = combine_record(cherry_record, xl_record)
-        cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
+            cherry_record = combine_record(cherry_record, xl_record)
+            cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
 
-        docs[es_id] = cherry_record
+            docs[es_id] = cherry_record
+
         batch_count += 1
         if batch_count % 2000 == 0:
             print("Batch full. Saving {0} documents to ES".format(len(docs)))
@@ -119,7 +121,10 @@ def combine_record(old, new):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads base records from LIBRISXL for cherry')
     parser.add_argument('--from', help='Elastic URL to read data from, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--xlindex', help='The name of the LIBRISXL index to read from (defaults to "libris")', default='libris')
+    parser.add_argument('--xltype', help='The type in LIBRISXL that contains bibliographic records', default='bib')
     parser.add_argument('--to', help='Elastic URL to write data to, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--index', help='Cherry index, default to cherry', default='cherry')
 
     try:
         args = vars(parser.parse_args())

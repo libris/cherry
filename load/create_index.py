@@ -22,7 +22,7 @@ def create(**args):
             exit(1)
 
     # create index
-    cf = open('load/cherry_es_config.json','r')
+    cf = open('config/cherry_es_config.json','r')
     ret = requests.put(url, data=cf.read())
 
     print("create {0} result: {1}".format(args['index'], ret.text))
