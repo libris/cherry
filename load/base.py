@@ -17,8 +17,6 @@ def load_records(**args):
                 "about.@id",
                 "about.creator.*",
                 "about.title",
-                "about.classification.*",
-                "about.subject.*",
                 "about.isbn",
                 "about.publication.*"
             ],
@@ -37,17 +35,18 @@ def load_records(**args):
                     { "exists": { "field": "about.isbn" } }
                 ],
                 "must": [
-                    { "terms": { "about.language.@id" : [ "/def/languages/swe" ] } }
+                    { "or" : [
+                        { "not" : { "exists": { "field": "about.language" } } },
+                        { "term": { "about.language.@id" : "/def/languages/swe" } }
+                        ]
+                    }
                 ],
                 "must": [
                     { "or" : [
-                        { "or" : [
-                            { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "H" } } } },
-                            { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "8" } } } }
-                        ] },
+                        { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "H" } } } },
                         { "and": [
+                            { "not" : { "exists": { "field": "about.classification" } } },
                             { "not" : { "term": { "about.literaryForm.@id": "/def/enum/content/NotFictionNotFurtherSpecified" } } },
-                            { "not" : { "exists": { "field": "about.classification" } } }
                         ] }
                     ] }
                 ]
@@ -70,7 +69,9 @@ def load_records(**args):
             es_id = "{name}{title}".format(name=slug_name, title=slug_title)
 
             try:
-                cherry_record = docs.get(es_id, to_es.get(index='cherry', doc_type='record', id=es_id).get('_source'))
+                cherry_record = docs.get(es_id)
+                if not cherry_record:
+                    cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id)
             except NotFoundError:
                 cherry_record = {}
 
