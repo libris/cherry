@@ -68,17 +68,18 @@ def load_records(**args):
 
             es_id = "{name}{title}".format(name=slug_name, title=slug_title)
 
-            try:
-                cherry_record = docs.get(es_id)
-                if not cherry_record:
-                    cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id)
-            except NotFoundError:
-                cherry_record = {}
+            if es_id:
+                try:
+                    cherry_record = docs.get(es_id)
+                    if not cherry_record:
+                        cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id)
+                except NotFoundError:
+                    cherry_record = {}
 
-            cherry_record = combine_record(cherry_record, xl_record)
-            cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
+                cherry_record = combine_record(cherry_record, xl_record)
+                cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
 
-            docs[es_id] = cherry_record
+                docs[es_id] = cherry_record
 
         batch_count += 1
         if batch_count % 2000 == 0:
