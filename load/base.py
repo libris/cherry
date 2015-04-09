@@ -33,23 +33,21 @@ def load_records(**args):
                     { "exists": { "field": "about.creator" } },
                     { "exists": { "field": "about.title" } },
                     { "exists": { "field": "about.isbn" } }
-                ],
-                "must": [
                     { "or" : [
                         { "not" : { "exists": { "field": "about.language" } } },
                         { "term": { "about.language.@id" : "/def/languages/swe" } }
                         ]
                     }
                 ],
-                "must": [
-                    { "or" : [
-                        { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "H" } } } },
-                        { "and": [
-                            { "not" : { "exists": { "field": "about.classification" } } },
-                            { "not" : { "term": { "about.literaryForm.@id": "/def/enum/content/NotFictionNotFurtherSpecified" } } },
-                        ] }
-                    ] }
-                ]
+#                "must": [
+#                    { "or" : [
+#                        { "query" : { "match_phrase_prefix": { "about.classification.notation.untouched": { "query": "H" } } } },
+#                        { "and": [
+#                            { "not" : { "exists": { "field": "about.classification" } } },
+#                            { "not" : { "term": { "about.literaryForm.@id": "/def/enum/content/NotFictionNotFurtherSpecified" } } },
+#                        ] }
+#                    ] }
+#                ]
             }
         }
     }
