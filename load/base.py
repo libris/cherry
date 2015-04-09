@@ -72,7 +72,7 @@ def load_records(**args):
                 try:
                     cherry_record = docs.get(es_id)
                     if not cherry_record:
-                        cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id)
+                        cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id, ignore=404)
                 except NotFoundError:
                     cherry_record = {}
 
