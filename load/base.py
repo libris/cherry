@@ -69,12 +69,7 @@ def load_records(**args):
             es_id = "{name}{title}".format(name=slug_name, title=slug_title)
 
             if es_id:
-                try:
-                    cherry_record = docs.get(es_id)
-                    if not cherry_record:
-                        cherry_record = to_es.get_source(index='cherry', doc_type='record', id=es_id, ignore=404)
-                except NotFoundError:
-                    cherry_record = {}
+                cherry_record = docs.get(es_id) if es_id in docs else to_es.get_source(index='cherry', doc_type='record', id=es_id, ignore=404)
 
                 cherry_record = combine_record(cherry_record, xl_record)
                 cherry_record['@id'] = "/{name}/{title}".format(name=slug_name, title=slug_title)
@@ -103,6 +98,8 @@ def load_records(**args):
 
 # TODO: check which fields should be overwritten
 def combine_record(old, new):
+    if not old:
+        old = {}
     xl_identifier = new.pop("@id")
     isbn = set([])
     if 'isbn' in old:
