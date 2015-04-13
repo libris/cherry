@@ -21,7 +21,7 @@ def reindex(**args):
 
         if batch_count % 2000 == 0:
             print("Batch full. Saving {0} documents to ES".format(len(docs)))
-            bulkdata = [ { '_index': args['toindex'], '_type': jsondoc.pop['record_type'], '_id' : record_id, '_source': jsondoc, '_parent': jsondoc.pop('parent_id') } for (record_id, jsondoc) in docs.items() ]
+            bulkdata = [ { '_index': args['toindex'], '_type': jsondoc.pop('record_type'), '_id' : record_id, '_source': jsondoc, '_parent': jsondoc.pop('parent_id') } for (record_id, jsondoc) in docs.items() ]
             r = bulk(to_es, bulkdata)
             docs = {}
 
