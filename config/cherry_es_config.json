@@ -19,6 +19,14 @@
                     ],
                     "tokenizer": "standard",
                     "type": "custom"
+                },
+                "shingle_analyzer": {
+                    "type":             "custom",
+                    "tokenizer":        "standard",
+                    "filter": [
+                        "lowercase",
+                        "shingle_filter"
+                    ]
                 }
             },
             "filter": {
@@ -26,6 +34,12 @@
                     "max_gram": 50,
                     "min_gram": 2,
                     "type": "edge_ngram"
+                },
+                "shingle_filter": {
+                    "type":             "shingle",
+                    "min_shingle_size": 2,
+                    "max_shingle_size": 2,
+                    "output_unigrams":  false
                 }
             }
         }
@@ -49,7 +63,13 @@
                     "index_analyzer": "fulltext_analyzer",
                     "store": true,
                     "term_vector": "with_positions_offsets_payloads",
-                    "type": "string"
+                    "type": "string",
+                    "fields": {
+                        "shingles": {
+                            "type":     "string",
+                            "analyzer": "shingle_analyzer"
+                        }
+                    }
                 }
             }
         },
