@@ -17,6 +17,8 @@ blogs = {
     "kulturloggen" : "http://feeds.feedburner.com/Kulturloggen",
     "nellas" : "http://nellasbocker.blogspot.se/feeds/posts/default",
     "lyrans" : "http://www.lyransnoblesser.se/feeds/posts/default",
+    "carolina" : "http://www.blogger.com/feeds/1677622624277141676/posts/default",
+    "bookbirds" : "http://www.blogger.com/feeds/6219321356983036215/posts/default",
 }
 
 
