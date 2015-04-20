@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import magic
+import re
 from os import listdir
 from os.path import join
 import argparse
@@ -63,15 +64,7 @@ def read_files(**args):
                 if line:
                     html = lxml.html.document_fromstring(cleaner.clean_html(line))
                     text = " ".join(t.strip() for t in html.xpath('//text()'))
-                    text = text.replace("<br>","\n")
-                    text = text.replace("<br />","\n")
-                    text = text.replace("<br/>","\n")
-                    text = text.replace("<b>", "")
-                    text = text.replace("</b>", "")
-                    text = text.replace("<i>", "")
-                    text = text.replace("</i>", "")
-                    text = text.replace("<p>", " ")
-                    text = text.replace("</p>", " ")
+                    text = re.sub("(?i)<[\w\s/]+>", " ", text).strip()
                     text = text.replace("&nbsp;", " ")
                     record['text'] += text
             if line.startswith("## ISBN:"):
@@ -102,15 +95,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads annotations from xinfodump for cherry')
     parser.add_argument('--server', help='Elastic host, default to localhost', default='localhost', nargs='+')
     parser.add_argument('--index', help='Cherry index, default to cherry', default='cherry')
-    parser.add_argument('--directory', help='The directory that contains the files')
-    parser.add_argument('--prefix', help='Identifier and annotationSource. I.e. bokrondellen or nielsen.')
-    parser.add_argument('--type', help='Type of data. I.e. summary or review.')
+    parser.add_argument('--directory', help='The directory that contains the files', required=True)
+    parser.add_argument('--prefix', help='Identifier and annotationSource. I.e. bokrondellen or nielsen.', required=True)
+    parser.add_argument('--type', help='Type of data. I.e. summary or review.', required=True)
 
     try:
         args = vars(parser.parse_args())
     except:
         exit(1)
 
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60, timeout=60)
 
     read_files(**args)
