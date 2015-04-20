@@ -1,1 +1,1 @@
-if (ctx._source['parent_candidate'] == null) {ctx._source['parent_candidate'] = [a];} else {ctx._source.parent_candidate.add(a);}
+if (ctx._source['parentCandidate'] == null) {ctx._source['parentCandidate'] = [a];} else {ctx._source.parentCandidate.add(a);}

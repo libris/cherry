@@ -32,7 +32,7 @@ def load_records(**args):
                 "must": [
                     { "exists": { "field": "about.creator" } },
                     { "exists": { "field": "about.title" } },
-                    { "exists": { "field": "about.isbn" } }
+                    { "exists": { "field": "about.isbn" } },
                     { "or" : [
                         { "not" : { "exists": { "field": "about.language" } } },
                         { "term": { "about.language.@id" : "/def/languages/swe" } }
