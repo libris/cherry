@@ -52,9 +52,9 @@ def typed(rtype, obj=None):
 
 def main(converter, args):
     fpath = args.pop(0)
-    with open(fpath) as fp:
+    with open(fpath, encoding='latin1') as fp:
         data = json.load(fp)
     result = converter(data)
-    print json.dumps(result,
+    print(json.dumps(result,
             sort_keys=False, indent=2, separators=(',', ': '),
-            ensure_ascii=False).encode('utf-8')
+            ensure_ascii=False))

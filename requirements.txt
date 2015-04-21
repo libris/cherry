@@ -3,3 +3,4 @@ requests==2.5.3
 awesome-slugify==1.6.2
 lxml==3.4.2
 elasticsearch==1.4.0
+python-magic==0.4.6

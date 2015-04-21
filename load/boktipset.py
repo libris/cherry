@@ -2,11 +2,25 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from itertools import islice
 import requests
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
+from .util import *
 
 boktipset_url = 'http://api.boktipset.se/book/book.cgi?isbn={isbn}&accesskey={key}&format=json'
+boktipset_comments_url = 'http://api.boktipset.se/book/comments.cgi?value={book}&accesskey={key}&format=json'
+
+def load_comments(bookid, isbn, url, key):
+    print("Trying to load comments for book id", bookid)
+    r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
+    try:
+        comments_raw = r.json()
+        return build_annotation("Comment", isbn, url, [remove_markup(c.get('text')) for c in comments_raw.get("answer", {}).get("bookcomments", {}).get("bookcomment", [])])
+    except:
+        print("Failed to read json for", isbn)
+    return None
+
 
 def load_record(isbn, key):
     print("Trying to load btdata for isbn", isbn)
@@ -17,6 +31,30 @@ def load_record(isbn, key):
         print("Failed to read json for", isbn)
     return None
 
+def build_annotation(rtype, isbn, url, text):
+    return {
+        "@type": rtype,
+        "annotates": {
+            "@id": "urn:isbn:{0}".format(isbn)
+        },
+        "annotationSource": {
+            "name": "boktipset.se",
+            "url": url
+        },
+        "text": text
+    }
+
+def build_boktipset_records(hits, key):
+    for hit in hits:
+        parent_id = hit.get('_id')
+        for isbn in hit.get('_source').get('isbn', []):
+            btrecord = load_record(isbn, key).get("answer", {})
+            if btrecord:
+                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
+
+                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+
+                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': load_comments(btrecord['bookid'], isbn, btrecord['url'], key) }
 
 def main(**args):
     es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -31,15 +69,18 @@ def main(**args):
             "match_all" : {}
         }
     }
-    docs = {}
-    for hit in scan(es, query, index='cherry', doc_type='record'):
-        parent_id = hit.get('_id')
-        btrecord = None
-        for isbn in hit.get('_source').get('isbn', []):
-            if not btrecord:
-                btrecord = load_record(isbn, args['accesskey'])
-            else:
-                print("Already found btrecord for related ISBN")
+
+    results = build_boktipset_records(scan(es, query, index='cherry', doc_type='record'), args['accesskey'])
+    batch_count = 0
+
+    while True:
+        chunk = list(islice(results, 2000))
+        batch_count += len(chunk)
+        if not chunk:
+            break
+
+        (count, response) = bulk(es, chunk)
+        es.cluster.health(wait_for_status='yellow', request_timeout=10)
 
 
 if __name__ == "__main__":

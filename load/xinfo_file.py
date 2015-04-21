@@ -6,10 +6,9 @@ import re
 from os import listdir
 from os.path import join
 import argparse
-import lxml.html
-from lxml.html.clean import Cleaner
 from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import bulk, scan
+from .util import *
 
 es = None
 
@@ -34,8 +33,6 @@ def find_parent(isbn):
     return None
 
 def read_files(**args):
-    cleaner = Cleaner(javascript=True, style=True)
-
     directory = args['directory']# "bokrondellen_summaries"
     #directory = "brs"
     prefix = args['prefix'] #"bokrondellen"
@@ -62,8 +59,7 @@ def read_files(**args):
                 reading_summary = False
             if reading_summary:
                 if line:
-                    html = lxml.html.document_fromstring(cleaner.clean_html(line))
-                    text = " ".join(t.strip() for t in html.xpath('//text()'))
+                    text = remove_markup(line)
                     text = re.sub("(?i)<[\w\s/]+>", " ", text).strip()
                     text = text.replace("&nbsp;", " ")
                     record['text'] += text
