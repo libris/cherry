@@ -49,13 +49,17 @@ def build_boktipset_records(hits, key):
         parent_id = hit.get('_id')
         for isbn in hit.get('_source').get('isbn', []):
             btrecord = load_record(isbn, key)
-            if btrecord and "anwer" in btrecord:
+            if btrecord and "answer" in btrecord:
                 btrecord = btrecord.get("answer", {})
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
+                if btrecord['saga']:
+                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
 
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+                if btrecord['reviews']:
+                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
 
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': load_comments(btrecord['bookid'], isbn, btrecord['url'], key) }
+                comments = load_comments(btrecord['bookid'], isbn, btrecord['url'], key)
+                if comments:
+                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': comments }
 
 def main(**args):
     es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -71,7 +75,7 @@ def main(**args):
         }
     }
 
-    results = build_boktipset_records(scan(es, query, index='cherry', doc_type='record'), args['accesskey'])
+    results = build_boktipset_records(scan(es, query, scan='30m', index='cherry', doc_type='record'), args['accesskey'])
     batch_count = 0
 
     while True:
