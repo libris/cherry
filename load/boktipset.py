@@ -75,7 +75,7 @@ def main(**args):
         }
     }
 
-    results = build_boktipset_records(scan(es, query, scan='30m', index='cherry', doc_type='record'), args['accesskey'])
+    results = build_boktipset_records(scan(es, query, scroll='30m', index='cherry', doc_type='record'), args['accesskey'])
     batch_count = 0
 
     while True:

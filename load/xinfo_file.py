@@ -74,7 +74,8 @@ def read_files(**args):
                 reading_summary = True
 
         if 'parent' in record and record['parent']:
-            docs["%s:%s:%s" % (prefix ,record['isbn'], suffix)] = record
+            isbn = record.pop('isbn')
+            docs["%s:%s:%s" % (prefix ,isbn, suffix)] = record
             record = {}
 
             if len(docs) % 1000 == 0:
