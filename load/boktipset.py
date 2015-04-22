@@ -48,8 +48,9 @@ def build_boktipset_records(hits, key):
     for hit in hits:
         parent_id = hit.get('_id')
         for isbn in hit.get('_source').get('isbn', []):
-            btrecord = load_record(isbn, key).get("answer", {})
-            if btrecord:
+            btrecord = load_record(isbn, key)
+            if btrecord and "anwer" in btrecord:
+                btrecord = btrecord.get("answer", {})
                 yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
 
                 yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
