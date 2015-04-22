@@ -58,14 +58,14 @@ def load_annotations(**args):
             batch_count += 1
             if batch_count % 2000 == 0:
                 print("Batch full. Saving {0} documents to ES".format(len(docs)))
-                bulkdata = [ { '_index': 'cherry', '_type': 'annotation', '_id' : str(es_id), 'parent': jsondoc.pop('parent'), '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+                bulkdata = [ { '_index': 'cherry', '_type': 'annotation', '_id' : str(es_id), '_parent': jsondoc.pop('parent'), '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
                 r = bulk(to_es, bulkdata)
                 docs = {}
 
     # Save remaining docs
     if len(docs) > 0:
         print("Collection complete. Saving {0} documents to ES".format(len(docs)))
-        bulkdata = [ { '_index': 'cherry', '_type': 'annotation', '_id' : str(es_id) , 'parent': jsondoc.pop('parent'), '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+        bulkdata = [ { '_index': 'cherry', '_type': 'annotation', '_id' : str(es_id) , '_parent': jsondoc.pop('parent'), '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
         r = bulk(to_es, bulkdata)
 
     print("Totally {0} documents collected.".format(batch_count))
