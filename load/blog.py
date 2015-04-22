@@ -9,6 +9,7 @@ import base64
 from lxml import etree
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
+from .util import *
 
 ATOM = "{http://www.w3.org/2005/Atom}"
 blogs = {
@@ -17,6 +18,8 @@ blogs = {
     "kulturloggen" : "http://feeds.feedburner.com/Kulturloggen",
     "nellas" : "http://nellasbocker.blogspot.se/feeds/posts/default",
     "lyrans" : "http://www.lyransnoblesser.se/feeds/posts/default",
+    "carolina" : "http://www.blogger.com/feeds/1677622624277141676/posts/default",
+    "bookbirds" : "http://www.blogger.com/feeds/6219321356983036215/posts/default",
 }
 
 
@@ -66,9 +69,7 @@ def consume(url, server):
                 back_link_elements = entry.findall("{0}link[@rel='alternate']".format(ATOM))
                 entry_id = back_link_elements[0].get("href") if len(next_link_elements) > 0 else entry.findtext("{0}id".format(ATOM))
                 content = entry.find("{0}content".format(ATOM)).text
-
-                html_elements = lxml.html.document_fromstring(cleaner.clean_html(content))
-                entry_content = " ".join(t.strip() for t in html_elements.xpath('//text()'))
+                entry_content = remove_markup(content)
 
                 categories = [c.get("term") for c in entry.findall("{0}category".format(ATOM))]
 

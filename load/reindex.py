@@ -1,34 +1,32 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from itertools import islice
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk,scan
+
+def _build_idx_req(index, hits):
+    for h in hits:
+        yield { '_index': index, '_type': h.get('_type'), '_id' : h.get('_id'), '_source': h.get('_source'), '_parent': h.get('fields', {}).get('_parent', None) }
+
 
 def reindex(**args):
     from_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
     to_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
-    docs = {}
-    batch_count = 1
-    for hit in scan(from_es, {"query": { "match_all": {} }}, index=args['fromindex'], doc_type=args['type'], fields=['_parent','_source','_routing']):
-        record = hit.get('_source')
-        parent_id = hit.get("fields", {}).get("_parent", None)
-        record_id = hit.get("_id")
-        record['parent_id'] = parent_id
-        record['record_type'] = hit.get("_type")
+    batch_count = 0
 
-        batch_count += 1
-        docs[record_id] = record
+    results = _build_idx_req(args['toindex'], scan(from_es, {"query": { "match_all": {} }}, index=args['fromindex'], doc_type=args['type'], fields=['_parent','_source','_routing']))
 
-        if batch_count % 2000 == 0:
-            print("Batch full. Saving {0} documents to ES".format(len(docs)))
-            bulkdata = [ { '_index': args['toindex'], '_type': jsondoc.pop('record_type'), '_id' : record_id, '_source': jsondoc, '_parent': jsondoc.pop('parent_id') } for (record_id, jsondoc) in docs.items() ]
-            r = bulk(to_es, bulkdata)
-            docs = {}
+    while True:
+        chunk = list(islice(results, 2000))
+        batch_count += len(chunk)
+        if not chunk:
+            break
 
-    if len(docs) > 0:
-        print("Collection complete. Saving {0} documents to ES".format(len(docs)))
-        bulkdata = [ { '_index': args['toindex'], '_type': jsondoc.pop('record_type'), '_id' : record_id, '_source': jsondoc, '_parent': jsondoc.pop('parent_id') } for (record_id, jsondoc) in docs.items() ]
-        r = bulk(to_es, bulkdata)
+        (count, response) = bulk(to_es, chunk)
+        to_es.cluster.health(wait_for_status='yellow', request_timeout=10)
+
+    print("Processed {0} documents and reindexed {1}.".format(batch_count, count))
 
 
 if __name__ == "__main__":
