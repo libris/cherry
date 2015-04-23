@@ -72,7 +72,7 @@ def read_files(**args):
                 record['parent'] = find_parent(record['isbn'])
                 record['text'] = ""
             
-            if line == match_line
+            if line == match_line:
                 reading = True
 
         if 'parent' in record and record['parent']:
