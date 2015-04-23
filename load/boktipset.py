@@ -55,7 +55,10 @@ def build_boktipset_records(hits, key):
                     yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
 
                 if btrecord['reviews']:
-                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+                    try:
+                        yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+                    except:
+                        print("failure picking out reviews for {0} at {1}".format(isbn, btrecord.get('reviews')))
 
                 comments = load_comments(btrecord['bookid'], isbn, btrecord['url'], key)
                 if comments:
