@@ -8,17 +8,22 @@ from os import listdir, makedirs
 from os.path import isfile, join, exists
 from elasticsearch import Elasticsearch
 from PIL import Image
+import re
 
 es = None
 TMP_PPM_DIR = "/tmp/ppm"
 JPG_DIR = "jpegs"
 
 def extract(pdffile):
-    print("Extracting $pdffile")
-    isbn = pdffile.split("/").pop().split(".")[0]
-    image = Image.open(subprocess.Popen("pdftoppm -f 1 -l 1 %s -" % pdffile, shell=True, stdout=subprocess.PIPE).stdout)
-    image.save("{dir}/{isbn}.jpg".format(dir=JPG_DIR, isbn=isbn))
-    print("Done ...")
+    print("Extracting", pdffile)
+    try:
+        isbn = pdffile.split("/").pop().split(".")[0]
+        image = Image.open(subprocess.Popen("pdftoppm -f 1 -l 1 %s -" % pdffile, shell=True, stdout=subprocess.PIPE).stdout)
+        image.save("{dir}/{isbn}.jpg".format(dir=JPG_DIR, isbn=isbn))
+        print("Done ...")
+    except Exception as e:
+        print("Failed", e)
+
 
 
 def find_parent(isbn):
@@ -34,7 +39,7 @@ def find_parent(isbn):
     if 'hits' in result:
         try:
             parent = result.get("hits").get("hits")[0].get("_id")
-            return paren
+            return parent
         except:
             print("No hits for {0}".format(isbn))
 
