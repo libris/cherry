@@ -71,7 +71,7 @@ def read_files(**args):
                 record['annotationSource'] = {"name":prefix.capitalize()}
                 record['parent'] = find_parent(record['isbn'])
                 record['text'] = ""
-            
+
             if line == match_line:
                 reading = True
 

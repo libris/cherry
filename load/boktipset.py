@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import argparse
+import argparse, time
 from itertools import islice
 import requests
 from elasticsearch import Elasticsearch
@@ -12,7 +12,7 @@ boktipset_url = 'http://api.boktipset.se/book/book.cgi?isbn={isbn}&accesskey={ke
 boktipset_comments_url = 'http://api.boktipset.se/book/comments.cgi?value={book}&accesskey={key}&format=json'
 
 def load_comments(bookid, isbn, url, key):
-    print("Trying to load comments for book id", bookid)
+    print("Trying to load comments for book id {0} at {1}".format(bookid, time.time()))
     r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
     try:
         comments_raw = r.json()
@@ -23,7 +23,7 @@ def load_comments(bookid, isbn, url, key):
 
 
 def load_record(isbn, key):
-    print("Trying to load btdata for isbn", isbn)
+    print("Trying to load btdata for isbn {0} at {1}".format(isbn, time.time()))
     r = requests.get(boktipset_url.format(isbn=isbn, key=key))
     try:
         return r.json()
