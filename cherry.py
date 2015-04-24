@@ -386,9 +386,13 @@ def api_json():
 def load_image(xinfopath):
     record = whelk.load("/xinfo/{0}".format(xinfopath), store='xinfo')
     if record:
-        return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])
+        if record.entry['contentType'] in ['image/jpeg','image/jpg','image/png','image/gif']:
+            return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])
+        elif record.entry['contentType'] in ['application/json','application/ld+json']:
+            datatext = bytes(record.data).decode('utf-8')
+            return json.loads(datatext)
     else:
-        print("Image /xinfo/{0} was not found.".format(xinfopath))
+        print("Resource /xinfo/{0} was not found.".format(xinfopath))
         abort(404)
 
 
