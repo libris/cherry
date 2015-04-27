@@ -84,7 +84,7 @@ def main(**args):
     batch_count = 0
 
     while True:
-        chunk = list(islice(results, 2000))
+        chunk = list(islice(results, 500))
         batch_count += len(chunk)
         if not chunk:
             break
