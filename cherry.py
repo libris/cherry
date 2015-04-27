@@ -23,6 +23,7 @@ import collections
 import operator
 
 pp = pprint.PrettyPrinter(indent=1)
+es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -146,9 +147,9 @@ def api_search():
     app.logger.debug("about to search")
     #HERE is the elastic search call
     print("elastic", app.config['ELASTIC_URI'])
-    r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
+    r = es.search(body=query, index='cherry', doc_type='blog').get('hits').get('hits'):
     app.logger.debug("did search {0}".format(time.time() - t0))
-    return r.text
+    return r#.text
 
     rtext = json.loads(r.text)
     if rtext.get('status', 0):
