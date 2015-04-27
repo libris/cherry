@@ -52,12 +52,13 @@ def read_files(**args):
             badcount += 1
 
         record = {}
-        reading_summary = False
+        reading = False
+        match_line = "## {0}:".upper()
         for line in dumpfile:
             line = line.strip()
             if line == "####":
-                reading_summary = False
-            if reading_summary:
+                reading = False
+            if reading:
                 if line:
                     text = remove_markup(line)
                     text = re.sub("(?i)<[\w\s/]+>", " ", text).strip()
@@ -65,16 +66,18 @@ def read_files(**args):
                     record['text'] += text
             if line.startswith("## ISBN:"):
                 record['isbn'] = line[8:]
-                record['@type'] = "Summary"
+                record['@type'] = suffix.capitalize()
                 record['annotates'] = {"@id":"urn:isbn:%s" % record['isbn']}
                 record['annotationSource'] = {"name":prefix.capitalize()}
                 record['parent'] = find_parent(record['isbn'])
                 record['text'] = ""
-            if line == "## SUMMARY:":
-                reading_summary = True
+
+            if line == match_line:
+                reading = True
 
         if 'parent' in record and record['parent']:
-            docs["%s:%s:%s" % (prefix ,record['isbn'], suffix)] = record
+            isbn = record.pop('isbn')
+            docs["%s:%s:%s" % (prefix ,isbn, suffix)] = record
             record = {}
 
             if len(docs) % 1000 == 0:

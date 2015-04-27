@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import argparse
+import argparse, time
 from itertools import islice
 import requests
 from elasticsearch import Elasticsearch
@@ -12,23 +12,25 @@ boktipset_url = 'http://api.boktipset.se/book/book.cgi?isbn={isbn}&accesskey={ke
 boktipset_comments_url = 'http://api.boktipset.se/book/comments.cgi?value={book}&accesskey={key}&format=json'
 
 def load_comments(bookid, isbn, url, key):
-    print("Trying to load comments for book id", bookid)
-    r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
+    print("Trying to load comments for book id {0} at {1}".format(bookid, time.time()))
     try:
+        r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
         comments_raw = r.json()
         return build_annotation("Comment", isbn, url, [remove_markup(c.get('text')) for c in comments_raw.get("answer", {}).get("bookcomments", {}).get("bookcomment", [])])
-    except:
+    except Exception as e:
         print("Failed to read json for", isbn)
+        print(e)
     return None
 
 
 def load_record(isbn, key):
-    print("Trying to load btdata for isbn", isbn)
-    r = requests.get(boktipset_url.format(isbn=isbn, key=key))
+    print("Trying to load btdata for isbn {0} at {1}".format(isbn, time.time()))
     try:
+        r = requests.get(boktipset_url.format(isbn=isbn, key=key))
         return r.json()
-    except:
+    except Exception as e:
         print("Failed to read json for", isbn)
+        print(e)
     return None
 
 def build_annotation(rtype, isbn, url, text):
@@ -49,16 +51,23 @@ def build_boktipset_records(hits, key):
         parent_id = hit.get('_id')
         for isbn in hit.get('_source').get('isbn', []):
             btrecord = load_record(isbn, key)
-            if btrecord and "anwer" in btrecord:
+            if btrecord and "answer" in btrecord:
                 btrecord = btrecord.get("answer", {})
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
+                if btrecord['saga']:
+                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:summary".format(isbn), '_parent': parent_id, '_source': build_annotation("Summary", isbn, btrecord['url'], remove_markup(btrecord['saga'])) }
 
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+                if btrecord['reviews']:
+                    try:
+                        yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:review".format(isbn), '_parent': parent_id, '_source': build_annotation("Review", isbn, btrecord['url'], [remove_markup(r.get("text")) for r in btrecord.get("reviews", {}).get("review", [])]) }
+                    except:
+                        print("failure picking out reviews for {0} at {1}".format(isbn, btrecord.get('reviews')))
 
-                yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': load_comments(btrecord['bookid'], isbn, btrecord['url'], key) }
+                comments = load_comments(btrecord['bookid'], isbn, btrecord['url'], key)
+                if comments:
+                    yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': comments }
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=600, timeout=600)
     query = {
         "size": 1000,
         "_source": {
@@ -71,11 +80,11 @@ def main(**args):
         }
     }
 
-    results = build_boktipset_records(scan(es, query, index='cherry', doc_type='record'), args['accesskey'])
+    results = build_boktipset_records(scan(es, query, scroll='60m', index='cherry', doc_type='record'), args['accesskey'])
     batch_count = 0
 
     while True:
-        chunk = list(islice(results, 2000))
+        chunk = list(islice(results, 500))
         batch_count += len(chunk)
         if not chunk:
             break

@@ -113,6 +113,50 @@
                 }
             }
         },
+        "cover": {
+            "_parent": {
+                "type": "record"
+            },
+            "properties": {
+                "annotationSource": {
+                    "properties": {
+                        "@type": {
+                            "include_in_all": false,
+                            "index": "not_analyzed",
+                            "store": true,
+                            "type": "string"
+                        },
+                        "name": {
+                            "fields": {
+                                "raw": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                }
+                            },
+                            "include_in_all": true,
+                            "store": true,
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "coverArt": {
+                    "type": "string"
+                },
+                "coverArtMidsize": {
+                    "type": "string"
+                },
+                "coverArtThumb": {
+                    "type": "string"
+                },
+                "coverArtFor": {
+                    "type": "object",
+                    "properties": {
+                        "@id": { "type" : "string",  "index" : "not_analyzed", "store" : true, "include_in_all" : false }
+                    }
+                }
+            }
+        },
         "annotation": {
             "_parent": {
                 "type": "record"

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+import os, io, re
 from os.path import isfile
-import re
 import json
 from flask import (Flask, render_template, request, make_response, Response, abort, send_file, session, redirect, jsonify)
 import jinja2
@@ -21,6 +20,7 @@ from traceback import print_last
 import pprint
 import collections
 import operator
+from whelk import Storage, Record
 
 pp = pprint.PrettyPrinter(indent=1)
 es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -30,6 +30,8 @@ app.config.from_pyfile('config.cfg')
 app.secret_key = app.config.get('SESSION_SECRET_KEY')
 app.remember_cookie_duration = timedelta(days=31)
 app.permanent_session_lifetime = timedelta(days=31)
+
+whelk = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 
 #app.config.from_object(__name__)
 
@@ -344,6 +346,7 @@ def api_suggest():
     return json.dumps(rtext)
 
 
+
 @app.route('/api/related')
 def api_related():
     print("related")
@@ -378,7 +381,22 @@ def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
 
+#@app.route('/xinfo/', defaults={'path': ''})
+@app.route('/xinfo/<path:xinfopath>')
+def load_image(xinfopath):
+    record = whelk.load("/xinfo/{0}".format(xinfopath), store='xinfo')
+    if record:
+        if record.entry['contentType'] in ['image/jpeg','image/jpg','image/png','image/gif']:
+            return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])
+        elif record.entry['contentType'] in ['application/json','application/ld+json']:
+            datatext = bytes(record.data).decode('utf-8')
+            return json.loads(datatext)
+    else:
+        print("Resource /xinfo/{0} was not found.".format(xinfopath))
+        abort(404)
+
+
 if __name__ == '__main__':
-    app.debug = app.config['DEBUG']
+    app.debug = True #app.config['DEBUG']
     app.run(host=app.config['BIND_HOST'], port=app.config['BIND_PORT'])
 
