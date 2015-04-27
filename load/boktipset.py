@@ -13,22 +13,24 @@ boktipset_comments_url = 'http://api.boktipset.se/book/comments.cgi?value={book}
 
 def load_comments(bookid, isbn, url, key):
     print("Trying to load comments for book id {0} at {1}".format(bookid, time.time()))
-    r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
     try:
+        r = requests.get(boktipset_comments_url.format(book=bookid, key=key))
         comments_raw = r.json()
         return build_annotation("Comment", isbn, url, [remove_markup(c.get('text')) for c in comments_raw.get("answer", {}).get("bookcomments", {}).get("bookcomment", [])])
-    except:
+    except Exception as e:
         print("Failed to read json for", isbn)
+        print(e)
     return None
 
 
 def load_record(isbn, key):
     print("Trying to load btdata for isbn {0} at {1}".format(isbn, time.time()))
-    r = requests.get(boktipset_url.format(isbn=isbn, key=key))
     try:
+        r = requests.get(boktipset_url.format(isbn=isbn, key=key))
         return r.json()
-    except:
+    except Exception as e:
         print("Failed to read json for", isbn)
+        print(e)
     return None
 
 def build_annotation(rtype, isbn, url, text):
