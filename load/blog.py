@@ -20,6 +20,8 @@ blogs = {
     "lyrans" : "http://www.lyransnoblesser.se/feeds/posts/default",
     "carolina" : "http://www.blogger.com/feeds/1677622624277141676/posts/default",
     "bookbirds" : "http://www.blogger.com/feeds/6219321356983036215/posts/default",
+    "sagorna" : "https://www.blogger.com/feeds/8641905497705737270/posts/default",
+    "oarya" : "http://oarya.se/feed/atom/?paged={page}",
 }
 
 

@@ -43,7 +43,7 @@ def assemble_records(hits, es):
 
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60)
     query = {
         "query": {
             "match_all" : {}
