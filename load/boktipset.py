@@ -67,7 +67,7 @@ def build_boktipset_records(hits, key):
                     yield { '_index': hit.get('_index'), '_type':'annotation', '_id': "boktipset:{0}:comment".format(isbn), '_parent': parent_id, '_source': comments }
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=600, timeout=600)
     query = {
         "size": 1000,
         "_source": {
@@ -80,7 +80,7 @@ def main(**args):
         }
     }
 
-    results = build_boktipset_records(scan(es, query, scroll='30m', index='cherry', doc_type='record'), args['accesskey'])
+    results = build_boktipset_records(scan(es, query, scroll='60m', index='cherry', doc_type='record'), args['accesskey'])
     batch_count = 0
 
     while True:
