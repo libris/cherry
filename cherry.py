@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+import os, io, re
 from os.path import isfile
-import re
 import json
 from flask import (Flask, render_template, request, make_response, Response, abort, send_file, session, redirect, jsonify)
 import jinja2
