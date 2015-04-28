@@ -67,6 +67,7 @@
                     "fields": {
                         "shingles": {
                             "type":     "string",
+                            "term_vector": "with_positions_offsets_payloads",
                             "analyzer": "shingle_analyzer"
                         }
                     }
