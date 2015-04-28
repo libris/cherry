@@ -113,7 +113,12 @@ def inverse_annotation_lookup(c):
 def save_child(source, parent):
     #parent = json.loads(parent)
     pid = parent.get('_id', 0)
-    new_id = "{name}:blog:{isbn}".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=parent.get('isbn', [])[0])
+    isbns = parent.get('isbn')
+    if type(isbns) = list:
+        i = isbns[0]
+    elif type(isbns) = string:
+        i = isbns
+    new_id = "{name}:blog:{isbn}".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=i)
     if pid and new_id:
         ret = es.index(body=source, index='cherry', doc_type='annotation', id=new_id, parent=pid)
 

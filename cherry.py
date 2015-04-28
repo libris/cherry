@@ -21,9 +21,10 @@ import pprint
 import collections
 import operator
 from whelk import Storage, Record
+from elasticsearch import Elasticsearch
 
 pp = pprint.PrettyPrinter(indent=1)
-es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+es = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -31,7 +32,7 @@ app.secret_key = app.config.get('SESSION_SECRET_KEY')
 app.remember_cookie_duration = timedelta(days=31)
 app.permanent_session_lifetime = timedelta(days=31)
 
-whelk = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+#whelk = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 
 #app.config.from_object(__name__)
 
@@ -51,25 +52,26 @@ def api_search():
     filters = []
     precision = 'y'
 
-#    qq = {
-#        "query_string" : {
-#            "default_field" : "_all",
-#            "default_operator" : "AND",
-#            "query" : q,
-#
-#        }
-#    } if q and q != '*' else { "match_all": {} }
     qq = {
-        "common": {
-            "summary": {
-                "query": q,
-                "cutoff_frequency": 0.001
-            }
+        "query_string" : {
+            "fields" : ["text", "name"],
+            "default_operator" : "AND",
+            "query" : q,
+
         }
     } if q and q != '*' else { "match_all": {} }
+#    qq = {
+#        "common": {
+#            "text": {
+#                "query": q,
+#                "cutoff_frequency": 0.001
+#            }
+#        }
+#    } if q and q != '*' else { "match_all": {} }
 
     query = {
-        #"_source" : ['highlight'],
+        "_source" : ['_id', 'name', 'highlight'],
+        "fields": "_parent",
         "sort" : [],
         "size" : 75,
 
@@ -80,19 +82,12 @@ def api_search():
         #          "match" : {}
         #      }
         #  },
-        "sort" : [
-            #   { "post_date" : {"order" : "asc"}},
-            #   "user",
-            #   { "name" : "desc" },
-            { "description" : "asc" },
-            "_score"
-        ],
 
-        "aggs" : {"room" : {"significant_terms" : {"field" : "summary"}}},
+        "aggs" : {"room" : {"terms" : {"field" : "shingles"}}},
 
-        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
-                       "pre_tags" : ["1"],
-                       "post_tags" : ["1"],
+        "highlight" : { "fields" : { "text" : {"type": "plain"}},
+                       "pre_tags" : ["em-"],
+                       "post_tags" : ["-em"],
                        "fragment_size": 100
                       },
 
@@ -100,13 +95,13 @@ def api_search():
             "text" : q,
             "simple_phrase" : {
                 "phrase" : {
-                    "field" : "_all",
+                    "field" : "text",
                     "size" : 2,
                     "real_word_error_likelihood" : 0.95,
                     "max_errors" : 3,
                     "gram_size" : 2,
                     "direct_generator" : [ {
-                        "field" : "_all",
+                        "field" : "text",
                         "suggest_mode" : "popular",
                         "min_word_length" : 1
                     } ],
@@ -132,13 +127,13 @@ def api_search():
         print("page")
         query['from'] = n * int(request.args.get('page'))
 
-    if sort:
-        if sort == 'd':
-            query['sort'] = [{ "description" : "asc" }]
-
-        if sort == 's':
-            query['sort'] = [{ "summary" : "asc" }]
-
+#    if sort:
+#        if sort == 'd':
+#            query['sort'] = [{ "description" : "asc" }]
+#
+#        if sort == 's':
+#            query['sort'] = [{ "summary" : "asc" }]
+#
  #   query['filter']['and']['filters'] = filters
 
 
@@ -149,9 +144,9 @@ def api_search():
     app.logger.debug("about to search")
     #HERE is the elastic search call
     print("elastic", app.config['ELASTIC_URI'])
-    r = es.search(body=query, index='cherry', doc_type='blog').get('hits').get('hits'):
+    r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    return r#.text
+    return json.dumps(r)
 
     rtext = json.loads(r.text)
     if rtext.get('status', 0):
@@ -188,6 +183,7 @@ def api_search():
 @app.route('/api/flt')
 def api_flt():
     q = request.args.get('q')
+    i = request.args.get('i')
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -197,35 +193,44 @@ def api_flt():
     date_filter = []
     precision = 'y'
 
-#    qq = {
-#        "query_string" : {
-#            "default_field" : "_all",
-#            "default_operator" : "AND",
-#            "query" : q,
-#
-#        }
-#    } if q and q != '*' else { "match_all": {} }
+    if i:
+        try:
+            query = {"query":{ "term" : { "_id" :i }}}       
+            r = es.search(body=query, index='cherry', doc_type='annotation')
+            print(r)
+            hits = r.get('hits', {}).get('hits', {})
+            for hit in hits:
+                print("hitten")
+                q = hit['_source']['text']
+                print(q)
+        except:
+            print("no record with id: ", i)
 
     query = {
         "sort" : [],
         "size" : 75,
 
         "query" :  {"flt": {
-            "fields": ["summary"],
+            "fields": ["text"],
             "like_text": q,
-            "max_query_terms": 12,
+            "max_query_terms": 52,
             "prefix_length": 4
         }},
 
-        "_source" :[],
+        "fields": ["_parent", "name", "isPartOf.url", "text", "text.shingles"],
+        #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
         #                        "post_tags" : ["<\/1>"],
         #                       "fragment_size": 100
         #                      },
-        "aggs" : {"room" : {"significant_terms" : {"field" : "summary", "min_doc_count" : 3}}}, #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
+        #"aggs" : {"room" : {"significant_terms" : {"field" : "text", "min_doc_count" : 3}}}, #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
+        "aggs" : {
+            "room" : {"terms" : {"field" : "text", "size": 5}},
+            "shingles" : {"terms" : {"field" : "text.shingles", "size": 5}},
 
 
+        }
     }
     if t:
         query = {
@@ -233,14 +238,14 @@ def api_flt():
             "filtered": {
                 "query": {
                     "flt": {
-                        "fields": ["summary"],
+                        "fields": ["text"],
                         "like_text": q,
                         "max_query_terms": 12,
                         "prefix_length": 4
                     }
                 },
                 "filter": {
-                    "and": [{ "type": { "value": t}},]
+                    "and": [{ "isPartOf.@type": { "value": t}},]
                 }
             }
         }
@@ -265,9 +270,11 @@ def api_flt():
     t0 = time.time()
     app.logger.debug("about to search")
     #HERE is the elastic search call
-    r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
+    #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
+    r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    #return r.text
+    print(r)
+    return json.dumps(r)
 
     rtext = json.loads(r.text)
     if rtext.get('status', 0):
@@ -290,7 +297,7 @@ def api_suggest():
 
     qq = {
         "query_string" : {
-            "default_field" : "_all",
+            "default_field" : "text",
             "default_operator" : "AND",
             "query" : q,
 
@@ -308,13 +315,13 @@ def api_suggest():
             "text" : q,
             "simple_phrase" : {
                 "phrase" : {
-                    "field" : "_all",
+                    "field" : "text",
                     "size" : 2,
                     "real_word_error_likelihood" : 0.95,
                     "max_errors" : 3,
                     "gram_size" : 2,
                     "direct_generator" : [ {
-                        "field" : "_all",
+                        "field" : "text",
                         "suggest_mode" : "popular",
                         "min_word_length" : 1
                     } ],
@@ -355,8 +362,8 @@ def api_related():
 
 
     query = {
-        "query" : { "filtered": { "filter": { "term": { "summary": q }}}},
-        "aggs" : {"room" : {"significant_terms" : {"field" : "summary"}}},
+        "query" : { "filtered": { "filter": { "term": { "text": q }}}},
+        "aggs" : {"room" : {"significant_terms" : {"field" : "text"}}},
     }
 
 
@@ -375,6 +382,43 @@ def api_related():
         return json.dumps(err)
 
     return json.dumps(rtext)
+
+
+@app.route('/api/children')
+def api_children():
+    q = request.args.get('q')
+  
+    qq = {
+        "common": {
+            "text": {
+                "query": q,
+                "cutoff_frequency": 0.001
+            }
+        }
+    } if q and q != '*' else { "match_all": {} }
+
+    query = {
+        "fields": ["_parent", "name", "isPartOf.url"],
+        "query": qq,
+
+        "aggs": {
+            "parent": {
+              "terms": { 
+                "field": "_id"
+              },
+              "aggs": {
+                "comments": {
+                  "terms": { 
+                    "field": "name"
+                  }
+                }
+              }
+            }
+        }
+        }
+    r = es.search(body=query, index='cherry', doc_type='annotation')
+    #r = es.search(body=query, index='cherry')
+    return json.dumps(r)
 
 @app.route('/api/json')
 def api_json():
