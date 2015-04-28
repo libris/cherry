@@ -69,7 +69,7 @@ def build_boktipset_records(hits, key):
 def main(**args):
     es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=600, timeout=600)
     query = {
-        "size": 1000,
+        "size": 100,
         "_source": {
             "include": [
                 "isbn",
