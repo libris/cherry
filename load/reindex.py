@@ -11,8 +11,8 @@ def _build_idx_req(index, hits):
 
 
 def reindex(**args):
-    from_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
-    to_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    from_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
+    to_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
     batch_count = 0
 
     results = _build_idx_req(args['toindex'], scan(from_es, {"query": { "match_all": {} }}, index=args['fromindex'], doc_type=args['type'], fields=['_parent','_source','_routing']))
