@@ -118,26 +118,23 @@ def api_search():
 
         "aggs" : {"room" : {"terms" : {"field" : "creator.familyName"}}},
 
-#        "highlight" : { "fields" : {"creator.familyName": {  
-#                                        "fragment_size": 100,
-#                                        "number_of_fragments": 3,
-#                                        "force_source": true
-#                                    }},
-#                                    {"creator.familyName": {  
-#                                        "fragment_size": 100,
-#                                        "number_of_fragments": 3,
-#                                        "force_source": true
-#                                    }},
-#                       "pre_tags" : ["</em>"],
-#                       "post_tags" : ["</em>"],
-#                      },
+        "highlight" : { "fields" : {"creator.familyName": {  
+                                        "fragment_size": 100,
+                                        "number_of_fragments": 3,
+                                        "force_source": 'true'
+                                    },
+                                    "creator.familyName": {  
+                                        "fragment_size": 100,
+                                        "number_of_fragments": 3,
+                                        "force_source": 'true'
+                                    }},
+                       "pre_tags" : ["</em>"],
+                       "post_tags" : ["</em>"],
+                      }
 
 
 
     }
-
-
-
     if request.args.get('n'):
         print("n")
         n = int(request.args.get('n'))
@@ -410,19 +407,21 @@ def api_related():
 
 
     query = {
-        "query" : { "filtered": { "filter": { "term": { "text": q }}}},
-        "aggs" : {"room" : {"significant_terms" : {"field" : "text"}}},
+        "query" : { "filtered": { "filter": { "term": { "text": q }}}},#use on text.shingles for bigrams
+        "aggs" : {"st" : {"significant_terms" : {"field" : "text"}},
+                  "t":  {"terms": {"field": "text"}}},
+        
+
     }
 
 
     t0 = time.time()
     app.logger.debug("about to search")
     #HERE is the elastic search call
-    print("elastic", app.config['ELASTIC_URI'])
-    r = requests.post(app.config['ELASTIC_URI'] + '/_search?search_type=count', data = json.dumps(query))
+    r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
 
-    rtext = json.loads(r.text)
+    rtext = r
     if rtext.get('status', 0):
         app.logger.debug('error' + rtext.get('error'))
         err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
