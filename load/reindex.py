@@ -32,7 +32,7 @@ def reindex(**args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reindex cherry')
     parser.add_argument('--server', help='Elastic server host, default to localhost', default='localhost', nargs='+')
-    parser.add_argument('--toserver', help='Elastic server host, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--toserver', help='Elastic server host, default to localhost', nargs='+')
     parser.add_argument('--fromindex', help='The index to read from (defaults to "cherry")', default='cherry')
     parser.add_argument('--toindex', help='The index to write data to', required=True)
     parser.add_argument('--type', help='The doc_type to read from (and write to)', nargs='+')
