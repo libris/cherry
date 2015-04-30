@@ -24,7 +24,8 @@ from whelk import Storage, Record
 from elasticsearch import Elasticsearch
 
 pp = pprint.PrettyPrinter(indent=1)
-es = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+#es = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -43,75 +44,87 @@ JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 def index():
     return json.dumps("välkommen")
 
+
+
 @app.route('/api/search')
 def api_search():
     print("search")
     q = request.args.get('q')
+    t = request.args.get('t')
+    c = request.args.get('c')
+
     sort = request.args.get('sort')
     n = 50
     filters = []
     precision = 'y'
 
-    qq = {
-        "query_string" : {
-            "fields" : ["text", "name"],
-            "default_operator" : "AND",
-            "query" : q,
 
-        }
-    } if q and q != '*' else { "match_all": {} }
-#    qq = {
-#        "common": {
-#            "text": {
-#                "query": q,
-#                "cutoff_frequency": 0.001
-#            }
-#        }
-#    } if q and q != '*' else { "match_all": {} }
+    qq = {'filtered' : {
+        'query':{ 
+            "bool": {
+                "should": [],
+                "must": []
+            }
+        }    
+    }
+    } if (q or t or c) and q != '*' else { "match_all": {} }
 
+    if q:
+        qq['filtered']['query']['bool']['should'].append({ 
+            "has_child": {
+                        "type": ["annotation"],
+                        "query": {
+
+                            "query_string" : {
+                                "fields" : ["text", "name"],
+                                "default_operator" : "AND",
+                                "query" : q,
+
+                            }
+                        }
+                    }
+            })
+
+    if t:
+        qq['filtered']['query']['bool']['must'].append({
+            "query_string": {
+                "fields": ["title"],
+                "default_operator": "AND",
+                "query": t
+                }
+        })
+    if c:
+        qq['filtered']['query']['bool']['must'].append({
+            "query_string": {
+                "fields": ["creator.familyName", "creator.givenName"],
+                "default_operator": "AND",
+                "query": c
+                }
+        })
     query = {
-        "_source" : ['_id', 'name', 'highlight'],
-        "fields": "_parent",
+        #"_source" : ['_id', 'name', '@id', 'creator', 'title'],
+        "fields": ["_source", "highlight"],
         "sort" : [],
         "size" : 75,
 
         "query" : qq,
 
-        #  "filtered" : {
-        #      "filter": {
-        #          "match" : {}
-        #      }
-        #  },
+        "aggs" : {"room" : {"terms" : {"field" : "creator.familyName"}}},
 
-        "aggs" : {"room" : {"terms" : {"field" : "shingles"}}},
-
-        "highlight" : { "fields" : { "text" : {"type": "plain"}},
-                       "pre_tags" : ["em-"],
-                       "post_tags" : ["-em"],
-                       "fragment_size": 100
+        "highlight" : { "fields" : {"creator.familyName": {  
+                                        "fragment_size": 100,
+                                        "number_of_fragments": 3,
+                                        "force_source": 'true'
+                                    }},
+                                    {"creator.familyName": {  
+                                        "fragment_size": 100,
+                                        "number_of_fragments": 3,
+                                        "force_source": 'true'
+                                    }},
+                       "pre_tags" : ["</em>"],
+                       "post_tags" : ["</em>"],
                       },
 
-        "suggest" : {
-            "text" : q,
-            "simple_phrase" : {
-                "phrase" : {
-                    "field" : "text",
-                    "size" : 2,
-                    "real_word_error_likelihood" : 0.95,
-                    "max_errors" : 3,
-                    "gram_size" : 2,
-                    "direct_generator" : [ {
-                        "field" : "text",
-                        "suggest_mode" : "popular",
-                        "min_word_length" : 1
-                    } ],
-                    "highlight": {
-                        "pre_tag": "<1>",
-                        "post_tag": "</1>"
-                    }
-                }
-            }
-        },
 
 
     }
@@ -144,11 +157,11 @@ def api_search():
     app.logger.debug("about to search")
     #HERE is the elastic search call
     print("elastic", app.config['ELASTIC_URI'])
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index='cherry', doc_type='record')
     app.logger.debug("did search {0}".format(time.time() - t0))
     return json.dumps(r)
 
-    rtext = json.loads(r.text)
+    rtext = r
     if rtext.get('status', 0):
         app.logger.debug('error' + rtext.get('error'))
         err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
@@ -157,7 +170,7 @@ def api_search():
 
     if 0:#rtext.get('hits', {}).get('hits', None):
         for ch, hit in enumerate(rtext['hits']['hits']):
-            for cs, s in enumerate(hit['highlight']['summary']):
+            for cs, s in enumerate(hit['highlight']['text']):
                 a = re.sub('<[^>]*>', '', s)
                 print(a)
                 #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
@@ -165,7 +178,7 @@ def api_search():
         try:
             for ch, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
                 try:
-                    for cs, s in enumerate(hit.get('highlight', {}).get('about.fullTextContent.raw', [])):
+                    for cs, s in enumerate(hit.get('highlight', {}).get('text', [])):
                         a = re.sub('<[^>]*>', '', s)
                         print(a)
                         #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
@@ -180,6 +193,23 @@ def api_search():
     return json.dumps(rtext)
 
 
+def child_texts(p):
+    query = {
+        "_source": "text",
+        "query": {
+        "has_parent" : {
+            "parent_type" : "record",
+            "query" : {
+                "term" : {
+                    "_id" :p
+                }
+            }
+        }
+    } }
+    r = es.search(body=query, index='cherry', doc_type='annotation')
+    hits = r.get('hits', {}).get('hits', [])
+    texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
+    return texts
 @app.route('/api/flt')
 def api_flt():
     q = request.args.get('q')
@@ -195,16 +225,10 @@ def api_flt():
 
     if i:
         try:
-            query = {"query":{ "term" : { "_id" :i }}}       
-            r = es.search(body=query, index='cherry', doc_type='annotation')
-            print(r)
-            hits = r.get('hits', {}).get('hits', {})
-            for hit in hits:
-                print("hitten")
-                q = hit['_source']['text']
-                print(q)
+            q = child_texts(i)
         except:
             print("no record with id: ", i)
+            return {"err": 1, "msg": "Ingen post med angivet id"}
 
     query = {
         "sort" : [],
@@ -217,7 +241,7 @@ def api_flt():
             "prefix_length": 4
         }},
 
-        "fields": ["_parent", "name", "isPartOf.url", "text", "text.shingles"],
+        "fields": ["_parent", "name", "isPartOf.url", "text"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -388,37 +412,55 @@ def api_related():
 def api_children():
     q = request.args.get('q')
   
-    qq = {
-        "common": {
-            "text": {
-                "query": q,
-                "cutoff_frequency": 0.001
-            }
-        }
-    } if q and q != '*' else { "match_all": {} }
 
+ #   qq = {
+ #       "query_string" : {
+ #           "default_field" : "text",
+ #           "default_operator" : "AND",
+ #           "query" : q,
+
+ #       }
+ #   } if q and q != '*' else {}
+    qq = {
+        "has_child" : {
+            "type": "annotation",
+            "query" : {
+                "query_string" : {
+                    "default_field" : "text",
+                    "default_operator" : "AND",
+                    "query" : q,
+                }
+            }
+
+        }
+    } if q and q != '*' else {}
     query = {
-        "fields": ["_parent", "name", "isPartOf.url"],
+        "fields": ["_parent",],
+        "_source": ["creator", "isbn"],
         "query": qq,
 
+
         "aggs": {
-            "parent": {
-              "terms": { 
-                "field": "_id"
-              },
-              "aggs": {
-                "comments": {
-                  "terms": { 
-                    "field": "name"
-                  }
+            "parent_id": {
+                "terms": { 
+                    "field": "_parent",
+                    "size": 50
+                },
+                "aggs": {
+                    "comments": {
+                        "terms": { 
+                            "field":"annotationSource.name",
+                        },
+                    }
                 }
-              }
             }
         }
-        }
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+
+    }
+    r = es.search(body=query, index='cherry', doc_type='record')
     #r = es.search(body=query, index='cherry')
     return json.dumps(r)
+
 
 @app.route('/api/json')
 def api_json():

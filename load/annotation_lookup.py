@@ -83,13 +83,13 @@ def inverse_annotation_lookup(c):
                     {
                         "query_string": {
                             "fields": ["text", "name", "url"],
-                            "query": c.title,
+                            "query": '"{0}"'.format(c.title),
                         }
                     },
                     {
                         "query_string": {
                             "fields": ["text", "name", "url"],
-                            "query": "{0} {1}".format(c.givenName, c.familyName),
+                            "query": '"{0} {1}"'.format(c.givenName, c.familyName),
                         }
                     }
                 ]
