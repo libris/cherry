@@ -386,7 +386,7 @@ def api_related():
     query = {
         "query" : { "filtered": { "filter": { "term": { "text": q }}}},#use on text.shingles for bigrams
         "aggs" : {"st" : {"significant_terms" : {"field" : "text"}},
-                  "t":  {"terms": {"field": "text"}}},
+                  "t":  {"terms": {"field": "text", "size": 100}}},
         
 
     }
