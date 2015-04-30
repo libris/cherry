@@ -21,7 +21,7 @@ import pprint
 import collections
 import operator
 from whelk import Storage, Record
-from trends import twitter, google
+from trends import Twitter, Google
 from elasticsearch import Elasticsearch
 
 pp = pprint.PrettyPrinter(indent=1)
