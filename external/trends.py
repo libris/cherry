@@ -12,6 +12,25 @@ class Twitter:
         return topics
 
 
+import requests
+from lxml import etree
+
 class Google:
-    def __init__(self):
-        self.initialized = True
+    google_trend_url = "http://www.google.com/trends/hottrends/atom/feed?pn={country_id}"
+
+    def trends(self, country_id='p42'):
+        res = requests.get(self.google_trend_url.format(country_id=country_id), stream=True, timeout=3600, headers={'Accept': 'application/atom+xml'})
+        xml = etree.parse(res.raw)
+
+        topics = [entry.text for entry in xml.getroot().findall("./channel/item/title")]
+
+        return topics
+
+def all_trends(*args):
+    topics = []
+    for service in args:
+        for t in service.trends():
+            topics.append(t.lower())
+
+    return set(topics)
+

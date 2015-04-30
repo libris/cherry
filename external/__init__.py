@@ -1,1 +1,1 @@
-from .trends import Twitter, Google
+from .trends import *
