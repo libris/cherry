@@ -11,9 +11,14 @@ from os.path import isfile, join
 JPG_DIR = "jpegs"
 DEST_DIR = "matched_jpegs"
 
-def build_record(isbn):
+
+
+def build_record(isbn, parent_identifier):
     return {
         "@type": "CoverArt",
+        "isPartOf": {
+            "@id": parent_identifier
+        },
         "annotates": {
             "@id": "urn:isbn:{0}".format(isbn)
         },
@@ -27,21 +32,23 @@ def build_record(isbn):
 def assemble_records(hits):
     for hit in hits:
         parent_id = hit.get('_id')
+        parent_identifier = hit.get('_source').get('@id')
         for isbn in hit.get('_source').get('isbn', []):
             filename = "{0}.jpg".format(isbn)
             if isfile(join(JPG_DIR, filename)):
                 os.rename(join(JPG_DIR, filename), join(DEST_DIR, filename))
                 print("Found cover image {0}, yielding.".format(filename))
-                yield { '_index': 'cherry', '_type': 'cover', '_id': "smakprov:{0}:cover".format(isbn), '_parent': parent_id, '_source': build_record(isbn) }
+                yield { '_index': 'cherry', '_type': 'cover', '_id': "smakprov:{0}:cover".format(isbn), '_parent': parent_id, '_source': build_record(isbn, parent_identifier) }
 
 
 
 def main(**args):
     es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
     query = {
-        "size": 1000,
+        "size": 500,
         "_source": {
             "include": [
+                "@id",
                 "isbn",
             ]
         },

@@ -21,6 +21,7 @@ import pprint
 import collections
 import operator
 from whelk import Storage, Record
+from trends import Twitter, Google
 from elasticsearch import Elasticsearch
 
 pp = pprint.PrettyPrinter(indent=1)
@@ -33,7 +34,7 @@ app.secret_key = app.config.get('SESSION_SECRET_KEY')
 app.remember_cookie_duration = timedelta(days=31)
 app.permanent_session_lifetime = timedelta(days=31)
 
-#whelk = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 
 #app.config.from_object(__name__)
 
@@ -411,16 +412,6 @@ def api_related():
 @app.route('/api/children')
 def api_children():
     q = request.args.get('q')
-  
-
- #   qq = {
- #       "query_string" : {
- #           "default_field" : "text",
- #           "default_operator" : "AND",
- #           "query" : q,
-
- #       }
- #   } if q and q != '*' else {}
     qq = {
         "has_child" : {
             "type": "annotation",
@@ -470,7 +461,7 @@ def api_json():
 #@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
 def load_image(xinfopath):
-    record = whelk.load("/xinfo/{0}".format(xinfopath), store='xinfo')
+    record = storage.load("/xinfo/{0}".format(xinfopath), store='xinfo')
     if record:
         if record.entry['contentType'] in ['image/jpeg','image/jpg','image/png','image/gif']:
             return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])

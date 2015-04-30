@@ -16,8 +16,9 @@ es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=Tr
 #hp01 = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 class Candidate:
-    def __init__(self, pid, title, givenName, familyName, year, isbn):
+    def __init__(self, pid, identifier, title, givenName, familyName, year, isbn):
         self.pid = pid
+        self.identifier = identifier
         self.title = title
         #self.creator = creator
         self.givenName = givenName
@@ -26,10 +27,10 @@ class Candidate:
         self.isbn = isbn
 
     def to_dict(self):
-        return {"_id": self.pid, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn}
+        return {"_id": self.pid, "@id":self.identifier, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn}
 
     def __repr__(self):
-        return str({"_id": self.pid, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn})
+        return str({"_id": self.pid, "@id":identifier, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn})
 
 def the_escapist(o):
     return re.escape(o.group(0))
@@ -70,7 +71,7 @@ def backbone_items():
             creator = creator[0]
         gn = creator.get('givenName')
         fn = creator.get('familyName')
-        c = Candidate(hit.get('_id'), t, gn, fn, y, source.get('isbn', [])[0])
+        c = Candidate(hit.get('_id'), source.get("@id"), t, gn, fn, y, source.get('isbn', [])[0])
         #print(c)
         yield c
 
@@ -118,7 +119,7 @@ def save_child(source, parent):
         i = isbns[0]
     elif type(isbns) = string:
         i = isbns
-    new_id = "{name}:blog:{isbn}".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=i)
+    new_id = "{name}:{isbn}:blog".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=i)
     if pid and new_id:
         ret = es.index(body=source, index='cherry', doc_type='annotation', id=new_id, parent=pid)
 
