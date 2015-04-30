@@ -30,7 +30,7 @@ class Candidate:
         return {"_id": self.pid, "@id":self.identifier, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn}
 
     def __repr__(self):
-        return str({"_id": self.pid, "@id":identifier, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn})
+        return str({"_id": self.pid, "@id":self.identifier, "title": self.title, "givenName": self.givenName, "familyName": self.familyName, "year": self.year, "isbn": self.isbn})
 
 def the_escapist(o):
     return re.escape(o.group(0))

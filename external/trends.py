@@ -32,5 +32,6 @@ def all_trends(*args):
         for t in service.trends():
             topics.append(t.lower())
 
-    return set(topics)
+    # Eliminate dulicates
+    return list(set(topics))
 

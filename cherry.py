@@ -21,12 +21,11 @@ import pprint
 import collections
 import operator
 from whelk import Storage, Record
-#from trends import Twitter, Google
+from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 
 pp = pprint.PrettyPrinter(indent=1)
-#es = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
-es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+#es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -34,9 +33,16 @@ app.secret_key = app.config.get('SESSION_SECRET_KEY')
 app.remember_cookie_duration = timedelta(days=31)
 app.permanent_session_lifetime = timedelta(days=31)
 
-#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 
 #app.config.from_object(__name__)
+
+es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=10)
+#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
+                  access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
+                  consumer_key=app.config['TWITTER_CONSUMER_KEY'],
+                  consumer_secret=app.config['TWITTER_CONSUMER_SECRET'])
+google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 
@@ -208,9 +214,26 @@ def child_texts(p):
     hits = r.get('hits', {}).get('hits', [])
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
+
+@app.route('/api/trending')
+def api_trending():
+    items = []
+    for topic in all_trends(twitter, google):
+        flt = do_flt_query(1, topic)
+        if flt.get('hits',{}).get('hits',[]):
+            ident = flt['hits']['hits'][0]['fields']['_parent']
+            record = es.get_source(index='cherry',doc_type='record',id=ident)
+            record['hotBecause'] = topic
+            items.append(record)
+
+    return json.dumps({"@context":"/cherry.jsonld","items":items})
+
 @app.route('/api/flt')
 def api_flt():
-    q = request.args.get('q')
+    return json.dumps(do_flt_query(75))
+
+def do_flt_query(size=75, qstr=None):
+    q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
     frm = request.args.get('from')
     to = request.args.get('to')
@@ -221,6 +244,8 @@ def api_flt():
     date_filter = []
     precision = 'y'
 
+    print("Query on ", q)
+
     if i:
         try:
             q = child_texts(i)
@@ -230,7 +255,7 @@ def api_flt():
 
     query = {
         "sort" : [],
-        "size" : 75,
+        "size" : size,
 
         "query" :  {"flt": {
             "fields": ["text"],
@@ -296,21 +321,19 @@ def api_flt():
     r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
     print(r)
-    return json.dumps(r)
+    return r
 
     rtext = json.loads(r.text)
     if rtext.get('status', 0):
         app.logger.debug('error' + rtext.get('error'))
         err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
         err['exception'] = r.text
-        return json.dumps(err)
+        return err
     if rtext.get('hits', {}).get('hits', None):
 
-        #return jsonify(rtext)
-        #return r.text
-        return json.dumps(rtext)
+        return rtext
 
-    return json.dumps(rtext)
+    return rtext
 
 @app.route('/api/suggest')
 def api_suggest():
@@ -450,7 +473,6 @@ def api_children():
     r = es.search(body=query, index='cherry', doc_type='record')
     #r = es.search(body=query, index='cherry')
     return json.dumps(r)
-
 
 @app.route('/api/json')
 def api_json():
