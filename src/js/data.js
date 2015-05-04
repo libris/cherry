@@ -26,14 +26,16 @@ module.exports.mixin = {
 
     // save promises and export them on the server
     if ( isNode ) {
-      typeof this.dataDidLoad == 'function' && this.dataDidLoad() // always simulate that data has loaded on the server
+      if ( this.isMounted() && typeof this.dataDidLoad == 'function' )
+        this.dataDidLoad() // always simulate that data has loaded on the server
       if ( state == 'init' ) {
         Array.prototype.push.apply(resolvers, promises)
       }
     } else {
       // no need to fulfill promises if cache exists or on first load
       if ( isCached )
-        typeof this.dataDidLoad == 'function' && this.dataDidLoad()
+        if ( this.isMounted() && typeof this.dataDidLoad == 'function' )
+          this.dataDidLoad()
       else {
         PubSub.trigger('loadstart')
         Promise.all(promises).then(function() {

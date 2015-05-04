@@ -9,6 +9,13 @@ var NotFound = require('./components/404')
 
 // Contains the skeleton of the App
 module.exports = React.createClass({
+  componentDidMount: function() {
+    collections.each(function(collection) {
+      collection.on('add change remove reset', function() {
+        this.forceUpdate()
+      }, this)
+    }, this)
+  },
   render: function() {
     var Handler = Router.getRouteHandler(this.props.route.name) || <NotFound />
     return (
