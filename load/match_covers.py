@@ -21,7 +21,7 @@ def find_parent(es, isbn):
                        size=1,
                        body=query)
     try:
-        res = result.get("hits").get("hits")[0].get("_source").get("_id")
+        res = result.get("hits").get("hits")[0].get("_id")
         if res:
             print("Found parent for {0}: {1}".format(isbn, res))
         return res
