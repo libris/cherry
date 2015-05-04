@@ -12,7 +12,9 @@ import re
 #es = Elasticsearch(hosts=app.config['ES_HOSTS'], sniff_on_start=False, sniff_on_connection_fail=True, sniffer_timeout=5)
 
 esurl = "http://localhost:9200"
-es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+es = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=30)
+es_search = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=30)
+#es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 #hp01 = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 class Candidate:
@@ -42,7 +44,7 @@ def backbone_items():
                 #"creator.*",
                 "creator",
                 "title",
-                #"publication.yr",
+                #"publication.year",
                 "publication.providerDate",
                 "isbn"
             ],
@@ -100,7 +102,7 @@ def inverse_annotation_lookup(c):
 
 
     try:
-        for hit in es.search(body=query, index='cherry', doc_type='blog').get('hits').get('hits'):
+        for hit in es_search.search(body=query, index='cherry', doc_type='blog').get('hits').get('hits'):
 
             source = hit.get('_source', {})
             candidates = [s.get('_id') for s in source.get("parentCandidate", {})]
@@ -111,17 +113,17 @@ def inverse_annotation_lookup(c):
         print(e)
         print(c)
 
-def save_child(source, parent):
+def save_child(blog_record_id, source, parent):
     #parent = json.loads(parent)
     pid = parent.get('_id', 0)
     isbns = parent.get('isbn')
     if type(isbns) == list:
         i = isbns[0]
-    elif type(isbns) == string:
+    elif type(isbns) == str:
         i = isbns
-    new_id = "{name}:{isbn}:blog".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=i)
-    if pid and new_id:
-        ret = es.index(body=source, index='cherry', doc_type='annotation', id=new_id, parent=pid)
+        #new_id = "{name}:{isbn}:blog:{blog_id}".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), blog_id=blog_record_id, isbn=i)
+    if pid: #and new_id:
+        ret = es.index(body=source, index='cherry', doc_type='annotation', parent=pid)
 
 
 def dedup_candidates():
@@ -138,23 +140,24 @@ def dedup_candidates():
         count = count+1
 
         source = hit.get('_source', {})
+        blog_record_id = hit.get('_id')
         #if 1 parentCandidate:  
         #reindex child with found parent
         if len(source.get('parentCandidate', [])) == 1:
             parent = source.get('parentCandidate', [])[0]
-            save_child(source, parent)
+            save_child(blog_record_id, source, parent)
         #if >=2 parentCandidates:
-        #compare yr of candidates
+        #compare year of candidates
         #if diff > 2, use youngest parent: (remove candidates?)
         #if diff <= 2, save to "uncertain", for manual check later
         elif len(source.get('parentCandidate', [])) >= 2:
             parents = source.get('parentCandidate', [])
             #parents = [json.loads(p) for p in parents]
-            sp = sorted(parents, key=lambda x: x["yr"], reverse=True)
-            diff = int(sp[0]["yr"]) - int(sp[1]["yr"])
+            sp = sorted(parents, key=lambda x: int(x["year"]), reverse=True)
+            diff = int(sp[0]["year"]) - int(sp[1]["year"])
             if diff > 2:
                 parent = sp[0]
-                save_child(source, parent)
+                save_child(blog_record_id, source, parent)
             else:
                 doc = source.update({"parentUncertain": 'true'})
                 ret = es.index(body=source, index='cherry', doc_type='blog', id=hit.get('_id'))
@@ -185,5 +188,5 @@ def iterate_backbone():
 
 if __name__ == "__main__":
     #cleanup_candidates()
-    iterate_backbone()
+    #iterate_backbone()
     dedup_candidates()
