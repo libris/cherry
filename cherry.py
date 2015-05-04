@@ -474,7 +474,8 @@ def api_children():
 @app.route('/api/trending')
 def api_trending():
     items = []
-    for topic in all_trends(twitter, google):
+    topics = all_trends(twitter, google)
+    for topic in topics:
         flt = do_flt_query(1, topic)
         if flt.get('hits',{}).get('hits',[]):
             ident = flt['hits']['hits'][0]['fields']['_parent']
@@ -482,7 +483,7 @@ def api_trending():
             record['hotBecause'] = topic
             items.append(record)
 
-    return json.dumps({"@context":"/cherry.jsonld","items":items})
+    return json.dumps({"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}), 200, {'Content-Type': 'application/json; charset=UTF-8'}
 
 @app.route('/api/json')
 def api_json():
