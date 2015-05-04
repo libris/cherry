@@ -21,7 +21,10 @@ def find_parent(es, isbn):
                        size=1,
                        body=query)
     try:
-        return result.get("hits").get("hits")[0].get("_source").get("_id")
+        res = result.get("hits").get("hits")[0].get("_source").get("_id")
+        if res:
+            print("Found parent for {0}: {1}".format(isbn, res))
+        return res
     except Exception as e:
         return None
 
@@ -46,7 +49,7 @@ def assemble_records(es):
         try:
             isbn = jpg.split("/").pop().split(".")[0]
             parent_id = find_parent(es,isbn)
-            if parent:
+            if parent_id:
                 yield { '_index': 'cherry', '_type': 'cover', '_id': "smakprov:{0}:cover".format(isbn), '_parent': parent_id, '_source': build_record(isbn, parent_id) }
         except Exception as e:
             print("Failed", e)
