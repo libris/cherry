@@ -473,19 +473,24 @@ def api_children():
     #r = es.search(body=query, index='cherry')
     return json.dumps(r)
 
+# TODO: Find better caching
+app.trends = {}
+
 @app.route('/api/trending')
 def api_trending():
-    items = []
-    topics = all_trends(twitter, google)
-    for topic in topics:
-        flt = do_flt_query(1, topic)
-        if flt.get('hits',{}).get('hits',[]):
-            ident = flt['hits']['hits'][0]['fields']['_parent']
-            record = es.get_source(index='cherry',doc_type='record',id=ident)
-            record['hotBecause'] = topic
-            items.append(record)
+    if not app.trends:
+        items = []
+        topics = all_trends(twitter, google)
+        for topic in topics:
+            flt = do_flt_query(1, topic)
+            if flt.get('hits',{}).get('hits',[]):
+                ident = flt['hits']['hits'][0]['fields']['_parent']
+                record = es.get_source(index='cherry',doc_type='record',id=ident)
+                record['hotBecause'] = topic
+                items.append(record)
+        app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
 
-    return json.dumps({"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}), 200, {'Content-Type': 'application/json; charset=UTF-8'}
+    return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
 
 @app.route('/api/json')
 def api_json():
