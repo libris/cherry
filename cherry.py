@@ -46,15 +46,6 @@ google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 
-@app.route('/')
-@app.route('/search')
-def index():
-    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-    json_url = os.path.join(SITE_ROOT, 'hashes.json')
-    hashes = json.load(open(json_url))
-    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
-
-
 @app.route('/api/search')
 def api_search():
     print("search")
@@ -526,6 +517,14 @@ def load_image(xinfopath):
     else:
         print("Resource /xinfo/{0} was not found.".format(xinfopath))
         abort(404)
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, 'hashes.json')
+    hashes = json.load(open(json_url))
+    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
 
 
 if __name__ == '__main__':

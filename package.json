@@ -39,8 +39,6 @@
     "handlebars": "^3.0.1",
     "jshint-stylish": "^1.0.1",
     "mocha": "^2.2.1",
-    "mongodb": "^1.4.35",
-    "mongoskin": "^1.4.13",
     "node-jsx": "^0.12.4",
     "reactify": "^1.1.0",
     "streamqueue": "^0.1.3",

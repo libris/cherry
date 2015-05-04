@@ -165,7 +165,7 @@ task.js = function(minify) {
     .pipe(buffer())
     .pipe(gulpif(env == 'development', sourcemaps.init({loadMaps: true})))
     .pipe(rename('main.js'))
-    .pipe(gulpif(env == 'development', uglify()))
+    .pipe(gulpif(env == 'production', uglify()))
     .pipe(hasher())
     .pipe(gulpif(env == 'development', sourcemaps.write('./')))
     .pipe(gulp.dest('static'))
