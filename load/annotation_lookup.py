@@ -12,8 +12,8 @@ import re
 #es = Elasticsearch(hosts=app.config['ES_HOSTS'], sniff_on_start=False, sniff_on_connection_fail=True, sniffer_timeout=5)
 
 esurl = "http://localhost:9200"
-es = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60)
-es_search = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60)
+es = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=30)
+es_search = Elasticsearch(['hp06','hp06-2','hp06-3'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=30)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 #hp01 = Elasticsearch('hp01.libris.kb.se', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
@@ -119,11 +119,11 @@ def save_child(blog_record_id, source, parent):
     isbns = parent.get('isbn')
     if type(isbns) == list:
         i = isbns[0]
-    elif type(isbns) == string:
+    elif type(isbns) == str:
         i = isbns
-        new_id = "{name}:{isbn}:blog:{blog_id}".format(name=slugify(source.get('isPartOf', {}).get('name', 0), blog_id=blog_record_id), isbn=i)
-    if pid and new_id:
-        ret = es.index(body=source, index='cherry', doc_type='annotation', id=new_id, parent=pid)
+        #new_id = "{name}:{isbn}:blog:{blog_id}".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), blog_id=blog_record_id, isbn=i)
+    if pid: #and new_id:
+        ret = es.index(body=source, index='cherry', doc_type='annotation', parent=pid)
 
 
 def dedup_candidates():
