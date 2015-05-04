@@ -49,8 +49,10 @@ JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 @app.route('/')
 @app.route('/search')
 def index():
-    return json.dumps("välkommen")
-
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, 'hashes.json')
+    hashes = json.load(open(json_url))
+    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
 
 
 @app.route('/api/search')

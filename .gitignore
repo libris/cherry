@@ -1,4 +1,10 @@
 *.pyc
+*.swo
+*.swp
 .DS_Store
 cherry.wsgi
 config.cfg
+node_modules/
+dist/
+log/*
+hashes.json
