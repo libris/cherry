@@ -7,12 +7,22 @@ module.exports = React.createClass({
   getDataDependencies: function() {
     return [{
       collection: 'trending',
-      query: {foo: 'bar'}
+      query: {q: 'apa'}
     }]
   },
+  getInitialState: function() {
+    return {
+      loading: true
+    }
+  },
+  dataDidLoad: function() {
+    this.setState({
+      loading: false
+    })
+  },
   render: function() {
-    if ( trending.isLoading() ) {
-      return <p>Loading trending topics...</p>
+    if ( this.state.loading ) {
+      return <p>Loading trending topics_</p>
     }
     return <p>{JSON.stringify(trending)}</p>
   }

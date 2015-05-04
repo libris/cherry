@@ -8,7 +8,7 @@
     "postinstall": "mkdir -p static; ./node_modules/.bin/gulp build",
     "build": "./node_modules/.bin/gulp build",
     "start": "python ./cherry.py -d",
-    "watch": "./node_modules/.bin/gulp watch",
+    "watch": "./node_modules/.bin/gulp"
   },
   "repository": "",
   "author": "Aino",
