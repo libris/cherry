@@ -5,6 +5,6 @@
 cherry.wsgi
 config.cfg
 node_modules/
-static/
+static/*
 log/*
 hashes.json
