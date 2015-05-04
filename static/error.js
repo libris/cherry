@@ -1,0 +1,1 @@
+var err=[];setTimeout(function(){if(!err.length)return;document.body.innerHTML="<div style='font-family:monaco,courier,monospace;color:#777;font-size:12px;line-height:1.6;margin: 0 auto;padding:20px;max-width:1600px;'>"+err.join("<div style='padding:1px 0 20px 0;border-top:1px solid #ddd;margin-top:20px'></div>")+"</div>";},10);
