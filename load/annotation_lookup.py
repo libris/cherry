@@ -115,9 +115,9 @@ def save_child(source, parent):
     #parent = json.loads(parent)
     pid = parent.get('_id', 0)
     isbns = parent.get('isbn')
-    if type(isbns) = list:
+    if type(isbns) == list:
         i = isbns[0]
-    elif type(isbns) = string:
+    elif type(isbns) == string:
         i = isbns
     new_id = "{name}:{isbn}:blog".format(name=slugify(source.get('isPartOf', {}).get('name', 0)), isbn=i)
     if pid and new_id:
@@ -184,6 +184,6 @@ def iterate_backbone():
 
 
 if __name__ == "__main__":
-    cleanup_candidates()
+    #cleanup_candidates()
     iterate_backbone()
     dedup_candidates()
