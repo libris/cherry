@@ -225,10 +225,25 @@ def child_texts(p):
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
 
+@app.route('/api/flt_records')
+def api_flt_records():
+    items = []
+    result = do_flt_query()
+    for hit in result.get('hits',{}).get('hits',[]):
+        ident = hit['fields']['_parent']
+        parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
+        parent_record['annotation'] = [hit['_source']]
+        items.append(parent_record)
+
+    # TODO: add cover data
+
+    return json.dumps({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}), 200, {'Content-Type':'application/json'}
+
 
 @app.route('/api/flt')
 def api_flt():
-    return json.dumps(do_flt_query(75))
+    size = request.args.get('size',75)
+    return json.dumps(do_flt_query(size)), 200, {'Content-Type':'application/json'}
 
 def do_flt_query(size=75, qstr=None):
     q = qstr if qstr else request.args.get('q')
@@ -261,7 +276,8 @@ def do_flt_query(size=75, qstr=None):
             "prefix_length": 4
         }},
 
-        "fields": ["_parent", "name", "isPartOf.url", "text"],
+        #"fields": ["_parent", "name", "isPartOf.url", "text"],
+        "fields": ["_parent", "_source"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
