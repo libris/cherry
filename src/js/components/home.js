@@ -24,6 +24,9 @@ module.exports = React.createClass({
     if ( this.state.loading ) {
       return <p>Loading trending topics_</p>
     }
-    return <p>{JSON.stringify(trending)}</p>
+    var trends = trending.map(function(trend, i) {
+      return <div key={trend.cid}>{trend.get('hotBecause')}</div>
+    })
+    return <div>{trends}</div>
   }
 })
