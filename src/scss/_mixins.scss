@@ -31,7 +31,7 @@
   z-index: $layerValue + $adjustment;
 }
 
-@mixin transition($prop: all, $duration: 300ms, $addWebkitToProp: false, $easing: cubic-bezier(0.080, 0.360, 0.040, 1.000)) {
+@mixin transition($prop: all, $duration: 300ms, $easing: cubic-bezier(0.080, 0.360, 0.040, 1.000), $addWebkitToProp: false) {
   @if $addWebkitToProp == true {
     -webkit-transition: -webkit-#{$prop} $duration $easing;
   } @else {
