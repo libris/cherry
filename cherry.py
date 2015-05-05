@@ -46,13 +46,6 @@ google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 
-@app.route('/')
-@app.route('/search')
-def index():
-    return json.dumps("välkommen")
-
-
-
 @app.route('/api/search')
 def api_search():
     print("search")
@@ -223,10 +216,25 @@ def child_texts(p):
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
 
+@app.route('/api/flt_records')
+def api_flt_records():
+    items = []
+    result = do_flt_query()
+    for hit in result.get('hits',{}).get('hits',[]):
+        ident = hit['fields']['_parent']
+        parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
+        parent_record['annotation'] = [hit['_source']]
+        items.append(parent_record)
+
+    # TODO: add cover data
+
+    return json.dumps({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}), 200, {'Content-Type':'application/json'}
+
 
 @app.route('/api/flt')
 def api_flt():
-    return json.dumps(do_flt_query(75))
+    size = request.args.get('size',75)
+    return json.dumps(do_flt_query(size)), 200, {'Content-Type':'application/json'}
 
 def do_flt_query(size=75, qstr=None, doctype='annotation'):
     """Will search annotations if no other doctype is given."""
@@ -261,7 +269,8 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
             "prefix_length": 4
         }},
 
-        "fields": ["_parent", "name", "isPartOf.url", "text"],
+        #"fields": ["_parent", "name", "isPartOf.url", "text"],
+        "fields": ["_parent", "_source"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -473,18 +482,24 @@ def api_children():
     #r = es.search(body=query, index='cherry')
     return json.dumps(r)
 
+# TODO: Find better caching
+app.trends = {}
+
 @app.route('/api/trending')
 def api_trending():
-    items = []
-    for topic in all_trends(twitter, google):
-        flt = do_flt_query(1, topic)
-        if flt.get('hits',{}).get('hits',[]):
-            ident = flt['hits']['hits'][0]['fields']['_parent']
-            record = es.get_source(index='cherry',doc_type='record',id=ident)
-            record['hotBecause'] = topic
-            items.append(record)
+    if not app.trends:
+        items = []
+        topics = all_trends(twitter, google)
+        for topic in topics:
+            flt = do_flt_query(1, topic)
+            if flt.get('hits',{}).get('hits',[]):
+                ident = flt['hits']['hits'][0]['fields']['_parent']
+                record = es.get_source(index='cherry',doc_type='record',id=ident)
+                record['hotBecause'] = topic
+                items.append(record)
+        app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
 
-    return json.dumps({"@context":"/cherry.jsonld","items":items})
+    return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
 
 @app.route('/api/json')
 def api_json():
@@ -504,6 +519,14 @@ def load_image(xinfopath):
     else:
         print("Resource /xinfo/{0} was not found.".format(xinfopath))
         abort(404)
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, 'hashes.json')
+    hashes = json.load(open(json_url))
+    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
 
 
 if __name__ == '__main__':

@@ -5,13 +5,29 @@ import argparse, os
 from itertools import islice
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
+from os import listdir
 from os.path import isfile, join
 
-
-JPG_DIR = "jpegs"
-DEST_DIR = "matched_jpegs"
-
-
+def find_parent(es, isbn):
+    if not isbn:
+        return None
+    query = {
+        "query": {
+            "term" : { "isbn" : isbn }
+        }
+    }
+    print("Looking for isbn", isbn)
+    result  = es.search(index='cherry',
+                       doc_type='record',
+                       size=1,
+                       body=query)
+    try:
+        res = result.get("hits").get("hits")[0].get("_id")
+        if res:
+            print("Found parent for {0}: {1}".format(isbn, res))
+        return res
+    except Exception as e:
+        return None
 
 def build_record(isbn, parent_identifier):
     return {
@@ -29,35 +45,21 @@ def build_record(isbn, parent_identifier):
         "coverArt": "/cover/{0}.jpg".format(isbn)
     }
 
-def assemble_records(hits):
-    for hit in hits:
-        parent_id = hit.get('_id')
-        parent_identifier = hit.get('_source').get('@id')
-        for isbn in hit.get('_source').get('isbn', []):
-            filename = "{0}.jpg".format(isbn)
-            if isfile(join(JPG_DIR, filename)):
-                os.rename(join(JPG_DIR, filename), join(DEST_DIR, filename))
-                print("Found cover image {0}, yielding.".format(filename))
-                yield { '_index': 'cherry', '_type': 'cover', '_id': "smakprov:{0}:cover".format(isbn), '_parent': parent_id, '_source': build_record(isbn, parent_identifier) }
-
+def assemble_records(es):
+    for jpg in listdir("../cover_images/"):
+        try:
+            isbn = jpg.split("/").pop().split(".")[0]
+            parent_id = find_parent(es,isbn)
+            if parent_id:
+                yield { '_index': 'cherry', '_type': 'cover', '_id': "smakprov:{0}:cover".format(isbn), '_parent': parent_id, '_source': build_record(isbn, parent_id) }
+        except Exception as e:
+            print("Failed", e)
 
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
-    query = {
-        "size": 500,
-        "_source": {
-            "include": [
-                "@id",
-                "isbn",
-            ]
-        },
-        "query": {
-            "match_all" : {}
-        }
-    }
+    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60)
 
-    results = assemble_records(scan(es, query, scroll='30m', index='cherry', doc_type='record'))
+    results = assemble_records(es)
     batch_count = 0
 
     while True:
@@ -73,7 +75,6 @@ def main(**args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads boktipset reviews into cherry')
     parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
-    group = parser.add_mutually_exclusive_group()
 
     try:
         args = vars(parser.parse_args())

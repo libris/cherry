@@ -188,5 +188,5 @@ def iterate_backbone():
 
 if __name__ == "__main__":
     #cleanup_candidates()
-    iterate_backbone()
+    #iterate_backbone()
     dedup_candidates()
