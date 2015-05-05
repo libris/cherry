@@ -493,6 +493,8 @@ def api_trending():
     if not app.trends:
         app.trends = all_trends(twitter, google)
 
+    print("trends", app.trends)
+
     return json_response({"items": app.trends})
 
 @app.route('/api/json')

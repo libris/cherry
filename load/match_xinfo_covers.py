@@ -33,12 +33,12 @@ def assemble_records(hits, from_es):
             for i in record_source['isbn']:
                 if not xinfo_record:
                     xinfo_record = find_xinfo_record(i, from_es)
-        else if 'isbn' in record_source:
+        elif 'isbn' in record_source:
             xinfo_record = find_xinfo_record(record_source['isbn'], from_es)
 
         parent_id = hit.get("_id")
         if parent_id and xinfo_record:
-            xinfo_record.remove("modified")
+            xinfo_record.pop("modified")
             record_id = xinfo_record.get("@id")[1:].replace("isbn:", "").replace("/", ":")
 
             yield { '_index': 'cherry', '_type': 'cover', '_id': record_id, '_parent': parent_id, '_source': xinfo_record }
