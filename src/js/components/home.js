@@ -3,13 +3,10 @@ var Data = require('../data')
 var trending = require('../collections').get('trending')
 var CardItem = require('./carditem')
 var KeywordBar = require('./keywordbar')
-var MasonryMixin = require('react-masonry-mixin')
+var Masonry = require('../masonry')
 var $ = require('jquery')
 var Tick = require('next-tick')
 
-var masonryOptions = {
-    transitionDuration: 0
-};
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -27,16 +24,7 @@ module.exports = React.createClass({
     this.setState({
       loading: false
     }, function() {
-      if ( this.masonry )
-        return
-      var mix = MasonryMixin('masonryContainer', masonryOptions)
-      for( var prop in mix ) {
-        if ( !this.hasOwnProperty(prop) )
-          this[prop] = mix[prop]
-      }
-      this.initializeMasonry()
-      this.performLayout()
-      Tick(function() {
+      this.masonry.init(this.refs.container.getDOMNode(), function() {
         var evt = document.createEvent('MouseEvent')
         evt.initMouseEvent('scroll', true, true)
         window.dispatchEvent(evt)
@@ -45,9 +33,12 @@ module.exports = React.createClass({
   },
   componentWillUnmount: function() {
     // Destroy masonry
+    this.masonry.destroy()
   },
   componentDidMount: function() {
-
+    this.masonry = new Masonry({
+      transitionDuration: 0
+    })
   },
   render: function() {
     if ( this.state.loading ) {
@@ -59,7 +50,7 @@ module.exports = React.createClass({
     return (
       <div>
         <KeywordBar />
-        <div ref="masonryContainer">{trends}</div>
+        <div ref="container">{trends}</div>
       </div>
       )
   }
