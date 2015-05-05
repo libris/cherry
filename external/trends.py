@@ -11,6 +11,9 @@ class Twitter:
 
         return topics
 
+    def __repr__(self):
+        return str("Twitter")
+
 
 import requests
 from lxml import etree
@@ -26,12 +29,19 @@ class Google:
 
         return topics
 
+    def __repr__(self):
+        return str("Google")
+
+
 def all_trends(*args):
     topics = []
+    taken_topics = []
     for service in args:
         for t in service.trends():
-            topics.append(t.lower())
+            if t not in taken_topics:
+                topics.append({"service":service.__repr__(), "topic":t})
+            taken_topics.append(t.lower())
 
     # Eliminate dulicates
-    return list(set(topics))
+    return topics
 
