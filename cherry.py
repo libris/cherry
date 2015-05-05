@@ -46,6 +46,9 @@ google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 
+def json_response(data):
+    return json.dumps(data), 200, {'Content-Type':'application/json'}
+
 @app.route('/api/search')
 def api_search():
     print("search")
@@ -126,7 +129,7 @@ def api_search():
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
                                     },
-                                    "creator.familyName": {  
+                                    "aggregations.text.shingles": {  
                                         "fragment_size": 100,
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
@@ -216,14 +219,31 @@ def child_texts(p):
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
 
+@app.route('/api/flt_records')
+def api_flt_records():
+    items = []
+    result = do_flt_query()
+    for hit in result.get('hits',{}).get('hits',[]):
+        ident = hit['fields']['_parent']
+        parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
+        parent_record['annotation'] = [hit['_source']]
+        items.append(parent_record)
+
+    # TODO: add cover data
+
+    return json_response({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items})
+
 
 @app.route('/api/flt')
 def api_flt():
-    return json.dumps(do_flt_query(75))
+    size = request.args.get('size',75)
+    return json_response(do_flt_query(size))
 
-def do_flt_query(size=75, qstr=None):
+def do_flt_query(size=75, qstr=None, doctype='annotation'):
+    """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
+    doctype = doctype if doctype else request.args.get('doctype')
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -252,7 +272,8 @@ def do_flt_query(size=75, qstr=None):
             "prefix_length": 4
         }},
 
-        "fields": ["_parent", "name", "isPartOf.url", "text"],
+        #"fields": ["_parent", "name", "isPartOf.url", "text"],
+        "fields": ["_parent", "_source"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -306,7 +327,7 @@ def do_flt_query(size=75, qstr=None):
     app.logger.debug("about to search")
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0}".format(time.time() - t0))
     print(r)
     return r
@@ -470,18 +491,9 @@ app.trends = {}
 @app.route('/api/trending')
 def api_trending():
     if not app.trends:
-        items = []
-        topics = all_trends(twitter, google)
-        for topic in topics:
-            flt = do_flt_query(1, topic)
-            if flt.get('hits',{}).get('hits',[]):
-                ident = flt['hits']['hits'][0]['fields']['_parent']
-                record = es.get_source(index='cherry',doc_type='record',id=ident)
-                record['hotBecause'] = topic
-                items.append(record)
-        app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
+        app.trends = all_trends(twitter, google)
 
-    return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
+    return json_response({"items": app.trends})
 
 @app.route('/api/json')
 def api_json():
