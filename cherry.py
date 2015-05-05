@@ -133,7 +133,7 @@ def api_search():
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
                                     },
-                                    "creator.familyName": {  
+                                    "aggregations.text.shingles": {  
                                         "fragment_size": 100,
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
@@ -228,9 +228,11 @@ def child_texts(p):
 def api_flt():
     return json.dumps(do_flt_query(75))
 
-def do_flt_query(size=75, qstr=None):
+def do_flt_query(size=75, qstr=None, doctype='annotation'):
+    """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
+    doctype = doctype if doctype else request.args.get('doctype')
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -313,7 +315,7 @@ def do_flt_query(size=75, qstr=None):
     app.logger.debug("about to search")
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0}".format(time.time() - t0))
     print(r)
     return r
