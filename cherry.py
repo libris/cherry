@@ -491,18 +491,9 @@ app.trends = {}
 @app.route('/api/trending')
 def api_trending():
     if not app.trends:
-        items = []
-        topics = all_trends(twitter, google)
-        for topic in topics:
-            flt = do_flt_query(1, topic)
-            if flt.get('hits',{}).get('hits',[]):
-                ident = flt['hits']['hits'][0]['fields']['_parent']
-                record = es.get_source(index='cherry',doc_type='record',id=ident)
-                record['hotBecause'] = topic
-                items.append(record)
-        app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
+        app.trends = all_trends(twitter, google)
 
-    return json_response(app.trends)
+    return json_response({"items": app.trends})
 
 @app.route('/api/json')
 def api_json():
