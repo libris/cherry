@@ -2,10 +2,10 @@ var React = require('react')
 var Data = require('../data')
 var collections = require('../collections')
 var CardItem = require('./carditem')
+var KeywordBar = require('./keywordbar')
 var Masonry = require('../masonry')
 var $ = require('jquery')
 var Tick = require('next-tick')
-
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -55,6 +55,11 @@ module.exports = React.createClass({
         content = <p>Loading results</p>
       }
     }
-    return <div ref="container">{content}</div>
+    return (
+      <div>
+        <KeywordBar />
+        <div ref="container">{content}</div>
+      </div>
+    )
   }
 })
