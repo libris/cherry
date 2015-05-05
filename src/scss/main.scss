@@ -19,7 +19,7 @@ tablet-landscape > 1000
 desktop > 1200
 */
 
-body{background:$bg-color; margin: 4em 0;}
+body{background:$bg-color;margin: 20px 0}
 
 .image-container {
   background: rgba(0,0,0,.05);
@@ -84,4 +84,8 @@ a.btn {
 }
 .content {
 	margin: 0px 50px;
+}
+.keywordBar {
+	margin: 10px;
+	font-size: 14pt;
 }

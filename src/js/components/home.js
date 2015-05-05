@@ -2,6 +2,7 @@ var React = require('react')
 var Data = require('../data')
 var trending = require('../collections').get('trending')
 var CardItem = require('./carditem')
+var KeywordBar = require('./keywordbar')
 var MasonryMixin = require('react-masonry-mixin')
 var $ = require('jquery')
 var Tick = require('next-tick')
@@ -55,6 +56,11 @@ module.exports = React.createClass({
     var trends = trending.map(function (trend) {
       return <CardItem key={trend.cid} data={trend} />
     })
-    return <div ref="masonryContainer">{trends}</div>
+    return (
+      <div>
+        <KeywordBar />
+        <div ref="masonryContainer">{trends}</div>
+      </div>
+      )
   }
 })
