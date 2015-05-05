@@ -280,7 +280,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
 
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 10}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
             "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
             "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
@@ -403,7 +403,11 @@ def api_suggest():
 
     return json.dumps(rtext)
 
-
+def cleanup(s):
+    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger"]
+    print(s)
+    stuff = ' '.join(w for w in s.split() if w not in noise_words_set)
+    return stuff
 
 @app.route('/api/related')
 def api_related():
@@ -413,18 +417,39 @@ def api_related():
 
 
     query = {
-        "query" : { "filtered": { "filter": { "term": { "text": q }}}},
+        "query" : { "filtered": { "query": { 
+            "bool": {
+                "should": [
+                    {"has_parent" : {
+                        "parent_type" : "record",
+                        "query" : {
+                            "query_string": {
+                                "fields" : ["creator.familyName", "creator.givenName", "title"],
+                                "default_operator" : "AND",
+                                "query" : q
+                            }
+                        }
+                    }},
+                    {"flt": {
+                        "fields": ["text"],
+                        "like_text": q,
+                        "max_query_terms": 10,
+                        "prefix_length": 4
+                    }},
+                ]
+
+
+        }}}},
         
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 10}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
         }
 
     }
 
 
     t0 = time.time()
-    app.logger.debug("about to search")
     #HERE is the elastic search call
     r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
@@ -436,8 +461,13 @@ def api_related():
         err['exception'] = r.text
         return json.dumps(err)
 
-    return json.dumps(rtext)
-
+    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
+    unique = []
+    if rel_terms:
+        #unique = [t for t in rel_terms if q not in t]
+        unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
+        print("unique: ",unique)
+    return json.dumps({"items": unique[:10]})
 
 @app.route('/api/children')
 def api_children():
@@ -501,6 +531,11 @@ def api_trending():
 
     return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
 
+        
+        
+
+
+
 @app.route('/api/json')
 def api_json():
     """For dev purposes only."""
@@ -525,8 +560,11 @@ def load_image(xinfopath):
 def index(path):
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
     json_url = os.path.join(SITE_ROOT, 'hashes.json')
-    hashes = json.load(open(json_url))
-    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
+    try:
+        hashes = json.load(open(json_url))
+        return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
+    except:
+        return json.dumps("nej")
 
 
 if __name__ == '__main__':
