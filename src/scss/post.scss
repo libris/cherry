@@ -1,0 +1,26 @@
+.detailView {
+	margin: 5px;
+  background-color: $item-bg-color;
+	// box-shadow: 0px 5px 0px 0px $grey;
+	.cover {
+		margin: 0px 15px 10px 0px;
+		width: 200px;
+		float: left;
+		@include breakpoint('desktop') {
+			width: 400px;
+			padding: 15px;
+		}
+	}
+	.information {
+		padding: 10px 0px;
+  	font-family: $font-content;
+  	font-weight: 200;
+  	h1 {
+  		margin: 0px;
+  		font-weight: 200;
+  	}
+  	p {
+  		padding: 0 15px;
+  	}
+	}
+}
