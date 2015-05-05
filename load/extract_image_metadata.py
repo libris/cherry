@@ -38,6 +38,7 @@ def assemble_records(hits):
 def main(**args):
     es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
     query = {
+        "size":100,
         "fields": ["_parent", "_source"],
         "query": {
             "match_all" : {}
@@ -53,8 +54,8 @@ def main(**args):
         if not chunk:
             break
 
-        (count, response) = bulk(to_es, chunk)
-        to_es.cluster.health(wait_for_status='yellow', request_timeout=10)
+        (count, response) = bulk(es, chunk)
+        es.cluster.health(wait_for_status='yellow', request_timeout=10)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Completes coverart with image dimensions')
