@@ -268,24 +268,32 @@ def api_flt_records_with_related():
 
 @app.route('/api/flt_records')
 def api_flt_records():
-    query = request.arg.get('q')
+    query = request.args.get('q')
     return json_response(assemble_flt_records(query))
 
 def assemble_flt_records(query):
     items = []
+    parent_ids = []
     result = do_flt_query(20, query)
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
-        parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
-        parent_record['annotation'] = [hit['_source']]
-        cover_art_url = find_preferred_cover(ident)
-        if cover_art_url: 
-            parent_record['coverArt'] = cover_art_url
-        items.append(parent_record)
+        if not ident in parent_ids:
+            parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
+            hitlist_record = {
+                              '@id': parent_record['@id'],
+                              'title': parent_record['title'],
+                              'creator': parent_record['creator']
+                             }
+            #hitlist_record['annotation'] = [hit['_source']]
+            cover_art_url = find_preferred_cover(ident)
+            if cover_art_url: 
+                hitlist_record['coverArt'] = cover_art_url
+            items.append(hitlist_record)
+        parent_ids.append(ident)
 
     # TODO: add cover data
 
-    return {"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}
+    return {"@context":"/cherry.jsonld","items":items}
 
 
 @app.route('/api/flt')
@@ -382,7 +390,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     r = es.search(body=query, index='cherry', doc_type=doctype)
-    app.logger.debug("did search {0}".format(time.time() - t0))
+    app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
     return r
 
