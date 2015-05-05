@@ -149,11 +149,11 @@
                 "coverArt": {
                     "type": "string"
                 },
-                "coverArtMidsize": {
-                    "type": "string"
+                "height": {
+                    "type": "integer"
                 },
-                "coverArtThumb": {
-                    "type": "string"
+                "width": {
+                    "type": "integer"
                 },
                 "coverArtFor": {
                     "type": "object",
