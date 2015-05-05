@@ -16,6 +16,7 @@ def find_parent(es, isbn):
             "term" : { "isbn" : isbn }
         }
     }
+    print("Looking for isbn", isbn)
     result  = es.search(index='cherry',
                        doc_type='record',
                        size=1,

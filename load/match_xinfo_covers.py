@@ -6,51 +6,55 @@ from itertools import islice
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
 
-def find_parent(identifier, es):
-    if not identifier:
-        return None
-    term = "wasDerivedFrom.@id"
-    if identifier.startswith("urn:isbn:"):
-        term = "isbn"
-        identifier = identifier[9:]
 
+def find_xinfo_record(isbn, from_es):
     query = {
         "query": {
-            "term" : { term : identifier }
+            "term" : { "annotates.@id" : "urn:isbn:{0}".format(isbn) }
         }
     }
-    result  = es.search(index='cherry',
-                       doc_type='record',
+    result  = from_es.search(index='xinfo',
+                       doc_type='cover',
                        size=1,
                        body=query)
     try:
-        return result.get("hits").get("hits")[0].get("_source").get("_id")
+        xinfo_record = result.get("hits").get("hits")[0].get("_source", {})
+        if xinfo_record:
+            print("Found xinfo record for {0}".format(isbn))
+        return xinfo_record
     except Exception as e:
         return None
 
-
-def assemble_records(hits, es):
+def assemble_records(hits, from_es):
     for hit in hits:
         record_source = hit.get('_source')
-        parent_id = find_parent(record_source.get("annotates", {}).get("@id"), es)
-        if parent_id:
-            record_source.remove("modified")
-            record_id = record_source.get("@id")[1:].replace("isbn:", "").replace("/", ":")
-            print("Found parent {0} for {1}".format(parent_id, record_source))
+        xinfo_record = None
+        if 'isbn' in record_source and type(record_source['isbn']) == list:
+            for i in record_source['isbn']:
+                if not xinfo_record:
+                    xinfo_record = find_xinfo_record(i, from_es)
+        elif 'isbn' in record_source:
+            xinfo_record = find_xinfo_record(record_source['isbn'], from_es)
 
-            yield { '_index': 'cherry', '_type': 'cover', '_id': record_id, '_parent': parent_id, '_source': record_source }
+        parent_id = hit.get("_id")
+        if parent_id and xinfo_record:
+            xinfo_record.pop("modified")
+            record_id = xinfo_record.get("@id")[1:].replace("isbn:", "").replace("/", ":")
+
+            yield { '_index': 'cherry', '_type': 'cover', '_id': record_id, '_parent': parent_id, '_source': xinfo_record }
 
 
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
+    from_es = Elasticsearch(args['fromserver'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
+    to_es = Elasticsearch(args['toserver'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
     query = {
         "query": {
             "match_all" : {}
         }
     }
 
-    results = assemble_records(scan(es, query, scroll='30m', index='xinfo', doc_type='cover'), es)
+    results = assemble_records(scan(to_es, query, scroll='30m', index='cherry', doc_type='record'), from_es)
     batch_count = 0
 
     while True:
@@ -59,13 +63,14 @@ def main(**args):
         if not chunk:
             break
 
-        (count, response) = bulk(es, chunk)
-        es.cluster.health(wait_for_status='yellow', request_timeout=10)
+        (count, response) = bulk(to_es, chunk)
+        to_es.cluster.health(wait_for_status='yellow', request_timeout=10)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads boktipset reviews into cherry')
-    parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--fromserver', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--toserver', help='Elastic server, default to localhost', default='localhost', nargs='+')
 
     try:
         args = vars(parser.parse_args())
