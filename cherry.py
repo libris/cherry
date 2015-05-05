@@ -219,6 +219,22 @@ def child_texts(p):
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
 
+def find_children(doc_type, parent_id):
+    query = {
+        "query": {
+            "has_parent" : {
+                "parent_type" : "record",
+                "query" : {
+                    "term" : {
+                        "_id" : parent_id
+                    }
+                }
+            }
+        }
+    }
+    result = es.search(body=query, doc_type=doc_type, index='cherry')
+    return [hit['_source'] for hit in result.get('hits', {}).get('hits', [])]
+
 @app.route('/api/flt_records')
 def api_flt_records():
     items = []
@@ -227,6 +243,7 @@ def api_flt_records():
         ident = hit['fields']['_parent']
         parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
         parent_record['annotation'] = [hit['_source']]
+        parent_record['coverArt'] = find_children('cover', ident)
         items.append(parent_record)
 
     # TODO: add cover data
@@ -329,7 +346,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0}".format(time.time() - t0))
-    print(r)
+    #print(r)
     return r
 
     rtext = json.loads(r.text)
@@ -493,14 +510,23 @@ def api_trending():
     if not app.trends:
         app.trends = all_trends(twitter, google)
 
-    print("trends", app.trends)
-
     return json_response({"items": app.trends})
 
 @app.route('/api/json')
 def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
+
+@app.route('/record/<path:recordpath>')
+def load_record_with_all_children(recordpath):
+    print("recordpath", recordpath)
+    ident = recordpath.replace("/", "")
+    record = es.get_source(index='cherry', doc_type='record', id=ident)
+    record['annotation'] = find_children('annotation', ident)
+    record['excerpt'] = find_children('excerpt', ident)
+    record['coverArt'] = find_children('cover', ident)
+
+    return json_response(record)
 
 #@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
