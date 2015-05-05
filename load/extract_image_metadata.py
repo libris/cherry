@@ -21,9 +21,10 @@ def assemble_records(hits):
             identifier = hit.get("_id")
             parent_id = hit.get("fields", {}).get("_parent")
             # Fix misspelled field
-            covertArt = record.pop("covertArt")
-            if covertArt:
-                record['coverArt'] = covertArt
+            if 'covertArt' in record:
+                covertArt = record.pop("covertArt")
+                if covertArt:
+                    record['coverArt'] = covertArt
             if 'coverArt' in record:
                 (width, height) = get_image_data("http://cherry.libris.kb.se{0}".format(record['coverArt']))
                 print("setting height: {0}, width: {1} on {2}".format(height, width, record['coverArt']))
