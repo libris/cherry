@@ -1,12 +1,11 @@
 var React = require('react')
 var Data = require('../data')
-var trending = require('../collections').get('trending')
+var collections = require('../collections')
 var CardItem = require('./carditem')
 var KeywordBar = require('./keywordbar')
 var Masonry = require('../masonry')
 var $ = require('jquery')
 var Tick = require('next-tick')
-
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -24,10 +23,12 @@ module.exports = React.createClass({
     this.setState({
       loading: false
     }, function() {
-      this.masonry.init(this.refs.container.getDOMNode(), function() {
-        var evt = document.createEvent('MouseEvent')
-        evt.initMouseEvent('scroll', true, true)
-        window.dispatchEvent(evt)
+      collections.get('hits').load({q: 'deklarera'}).then(function(response) {
+        this.masonry.init(this.refs.container.getDOMNode(), function() {
+          var evt = document.createEvent('MouseEvent')
+          evt.initMouseEvent('scroll', true, true)
+          window.dispatchEvent(evt)
+        })
       })
     })
   },
@@ -41,17 +42,24 @@ module.exports = React.createClass({
     })
   },
   render: function() {
+    var content = null
     if ( this.state.loading ) {
-      return <p>Loading trending topics_</p>
+      content = <p>Loading trending topics_</p>
+    } else {
+      var hits = collections.get('hits').getModel({ query: 'deklarera' })
+      if ( hits && hits.get('items') ) {
+        content = hits.get('items').map(function(item, i) {
+          return <CardItem key={i+':'+item['@id']} data={item} />
+        })
+      } else {
+        content = <p>Loading results</p>
+      }
     }
-    var trends = trending.map(function (trend) {
-      return <CardItem key={trend.cid} data={trend} />
-    })
     return (
       <div>
         <KeywordBar />
-        <div ref="container">{trends}</div>
+        <div ref="container">{content}</div>
       </div>
-      )
+    )
   }
 })
