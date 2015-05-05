@@ -46,6 +46,9 @@ google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
 
+def json_response(data):
+    return json.dumps(data), 200, {'Content-Type':'application/json'}
+
 @app.route('/api/search')
 def api_search():
     print("search")
@@ -228,13 +231,13 @@ def api_flt_records():
 
     # TODO: add cover data
 
-    return json.dumps({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}), 200, {'Content-Type':'application/json'}
+    return json_response({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items})
 
 
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json.dumps(do_flt_query(size)), 200, {'Content-Type':'application/json'}
+    return json_response(do_flt_query(size))
 
 def do_flt_query(size=75, qstr=None):
     q = qstr if qstr else request.args.get('q')
@@ -497,7 +500,7 @@ def api_trending():
                 items.append(record)
         app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
 
-    return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
+    return json_response(app.trends)
 
 @app.route('/api/json')
 def api_json():

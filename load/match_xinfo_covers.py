@@ -43,7 +43,8 @@ def assemble_records(hits, es):
 
 
 def main(**args):
-    es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
+    from_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
+    to_es = Elasticsearch(args['server'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=60)
     query = {
         "query": {
             "match_all" : {}
@@ -65,7 +66,8 @@ def main(**args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads boktipset reviews into cherry')
-    parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--fromserver', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--toserver', help='Elastic server, default to localhost', default='localhost', nargs='+')
 
     try:
         args = vars(parser.parse_args())
