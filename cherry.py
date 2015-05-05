@@ -37,7 +37,7 @@ app.permanent_session_lifetime = timedelta(days=31)
 #app.config.from_object(__name__)
 
 es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=10)
-#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
                   access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
                   consumer_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -522,11 +522,15 @@ def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)
     ident = recordpath.replace("/", "")
     record = es.get_source(index='cherry', doc_type='record', id=ident)
-    record['annotation'] = find_children('annotation', ident)
-    record['excerpt'] = find_children('excerpt', ident)
-    record['coverArt'] = find_children('cover', ident)
+    if record:
+        record['annotation'] = find_children('annotation', ident)
+        record['excerpt'] = find_children('excerpt', ident)
+        record['coverArt'] = find_children('cover', ident)
 
-    return json_response(record)
+        return json_response(record)
+    else:
+        print("Resource {0} not found.".format(recordpath))
+        abort(404)
 
 #@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
@@ -547,7 +551,10 @@ def load_image(xinfopath):
 def index(path):
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
     json_url = os.path.join(SITE_ROOT, 'hashes.json')
-    hashes = json.load(open(json_url))
+    try:
+        hashes = json.load(open(json_url))
+    except FileNotFoundError:
+        hashes = {}
     return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
 
 
