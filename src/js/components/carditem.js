@@ -4,8 +4,11 @@ var ImageComponent = require('ainojs-react-image')
 
 module.exports = React.createClass({
   render: function() {
+    var data = this.props.data
+    return <div>{data['@id']}</div>
+    /*
     return (
-        <a className="cardItem" href={ 'post/' + this.props.data.get('topic')}>
+        <a className="cardItem" href={ 'post/' + this.props.model.get('topic')}>
         	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={114/200} />
         	<div className="information">
         		<h1>{this.props.data.get('topic')}</h1>
@@ -13,5 +16,6 @@ module.exports = React.createClass({
         	</div>
         </a>
     )
+    */
   }
 })
