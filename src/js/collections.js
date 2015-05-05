@@ -4,7 +4,13 @@ var CollectionFactory = require('./collectionfactory')
 module.exports = CollectionFactory({
   trending: {
     dataUrl: '/api/trending',
-    cacheTTL: 5,
-    listKey: 'items'
+    cacheTTL: 0
+  },
+  hits: {
+    dataUrl: '/api/hits',
+    cacheTTL: 10,
+    getCollectionList: function(result) {
+      return [result]
+    }
   }
 })
