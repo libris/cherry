@@ -1,8 +1,21 @@
-$bg-color: #fff;
-$light-grey: #D5D4D4;
-$grey: #A9A9A9;
-$dark-grey: #181818;
-$font-stack: Helvetica, sans-serif;
+
+@import "_mixins";
+@import "_variables";
+
+/*
+-----------
+BREAKPOINTS
+-----------
+@include breakpoint('desktop') {
+  [rules]
+}
+mobile-small < 320
+mobile > 414
+mobile-huge > 600
+tablet-portrait > 768
+tablet-landscape > 1000
+desktop > 1200
+*/
 
 body{background:$bg-color}
 
