@@ -1,4 +1,5 @@
 var React = require('react')
+window.Masonry = require('masonry-layout')
 var Router = require('./router')
 var Backbone = require('backbone')
 var collections = require('./collections')

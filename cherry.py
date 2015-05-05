@@ -37,7 +37,7 @@ app.permanent_session_lifetime = timedelta(days=31)
 #app.config.from_object(__name__)
 
 es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=10)
-#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
                   access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
                   consumer_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -45,6 +45,9 @@ twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
 google = Google()
 
 JSON_LD_MIME_TYPE = 'application/ld+json'#Obsolete?
+
+def json_response(data):
+    return json.dumps(data), 200, {'Content-Type':'application/json'}
 
 @app.route('/api/search')
 def api_search():
@@ -216,6 +219,39 @@ def child_texts(p):
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
 
+def find_children(doc_type, parent_id):
+    query = {
+        "query": {
+            "has_parent" : {
+                "parent_type" : "record",
+                "query" : {
+                    "term" : {
+                        "_id" : parent_id
+                    }
+                }
+            }
+        }
+    }
+    result = es.search(body=query, doc_type=doc_type, index='cherry')
+    return [hit['_source'] for hit in result.get('hits', {}).get('hits', [])]
+
+def find_preferred_cover(ident):
+    images = find_children('cover', ident)
+    url = None
+    for image in images:
+        # TODO: fix this error in xinfo records and reload data
+        key = 'coverArt'
+        if not key in image:
+            key = 'covertArt'
+        if not url:
+            url = image[key]
+        if image['annotationSource']['name'] == "Smakprov":
+            # Found preferred image
+            url = image[key]
+
+    return url
+
+
 @app.route('/api/flt_records')
 def api_flt_records():
     items = []
@@ -224,17 +260,20 @@ def api_flt_records():
         ident = hit['fields']['_parent']
         parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
         parent_record['annotation'] = [hit['_source']]
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url: 
+            parent_record['coverArt'] = cover_art_url
         items.append(parent_record)
 
     # TODO: add cover data
 
-    return json.dumps({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}), 200, {'Content-Type':'application/json'}
+    return json_response({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items})
 
 
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json.dumps(do_flt_query(size)), 200, {'Content-Type':'application/json'}
+    return json_response(do_flt_query(size))
 
 def do_flt_query(size=75, qstr=None, doctype='annotation'):
     """Will search annotations if no other doctype is given."""
@@ -326,7 +365,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0}".format(time.time() - t0))
-    print(r)
+    #print(r)
     return r
 
     rtext = json.loads(r.text)
@@ -518,18 +557,9 @@ app.trends = {}
 @app.route('/api/trending')
 def api_trending():
     if not app.trends:
-        items = []
-        topics = all_trends(twitter, google)
-        for topic in topics:
-            flt = do_flt_query(1, topic)
-            if flt.get('hits',{}).get('hits',[]):
-                ident = flt['hits']['hits'][0]['fields']['_parent']
-                record = es.get_source(index='cherry',doc_type='record',id=ident)
-                record['hotBecause'] = topic
-                items.append(record)
-        app.trends = {"@context":"/cherry.jsonld","totalResults":len(items),"items":items,"trendingTopics":topics}
+        app.trends = all_trends(twitter, google)
 
-    return json.dumps(app.trends), 200, {'Content-Type': 'application/json; charset=UTF-8'}
+    return json_response({"items": app.trends})
 
         
         
@@ -540,6 +570,21 @@ def api_trending():
 def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
+
+@app.route('/record/<path:recordpath>')
+def load_record_with_all_children(recordpath):
+    print("recordpath", recordpath)
+    ident = recordpath.replace("/", "")
+    record = es.get_source(index='cherry', doc_type='record', id=ident)
+    if record:
+        record['annotation'] = find_children('annotation', ident)
+        record['excerpt'] = find_children('excerpt', ident)
+        record['coverArt'] = find_children('cover', ident)
+
+        return json_response(record)
+    else:
+        print("Resource {0} not found.".format(recordpath))
+        abort(404)
 
 #@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
@@ -562,9 +607,9 @@ def index(path):
     json_url = os.path.join(SITE_ROOT, 'hashes.json')
     try:
         hashes = json.load(open(json_url))
-        return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
-    except:
-        return json.dumps("nej")
+    except FileNotFoundError:
+        hashes = {}
+    return render_template('index.html', hashes=hashes) # TODO: import hashes.json for cachebusting
 
 
 if __name__ == '__main__':

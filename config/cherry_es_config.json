@@ -25,6 +25,7 @@
                     "tokenizer":        "standard",
                     "filter": [
                         "lowercase",
+                        "stopword_filter",
                         "shingle_filter"
                     ]
                 }
@@ -40,6 +41,10 @@
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
                     "output_unigrams":  false
+                },
+                "stopword_filter": {
+                    "type": "stop",
+                    "stopwords": "_swedish_"
                 }
             }
         }
@@ -268,6 +273,11 @@
         },
         "record": {
             "properties": {
+                "author_title": {
+                    "index_analyzer": "autocomplete",
+                    "store": true,
+                    "type": "string"
+                },
                 "classification": {
                     "properties": {
                         "@id": {

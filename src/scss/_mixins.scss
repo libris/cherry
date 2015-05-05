@@ -1,0 +1,133 @@
+@mixin antialias() {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+@mixin subpixel() {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+@mixin clearfix() {
+  zoom:1;
+  &:before, &:after{ content:""; display:table; }
+  &:after{ clear: both; }
+}
+
+@mixin zindex($layer: 'ground', $adjustment: 0) {
+
+  @if $layer == 'underground' {
+    $layerValue: -1;
+  } @else if $layer == 'ground' {
+    $layerValue: 0;
+  } @else if $layer == 'treetops' {
+    $layerValue: 500; // Page elements
+  } @else if $layer == 'mountains' {
+    $layerValue: 2000; // Menus
+  } @else if $layer == 'clouds' {
+    $layerValue: 5000; // Lightboxes and popups
+  } @else if $layer == 'orbit' {
+    $layerValue: 9000; // To be used sparingly
+  }
+
+  z-index: $layerValue + $adjustment;
+}
+
+@mixin transition($prop: all, $duration: 300ms, $easing: cubic-bezier(0.080, 0.360, 0.040, 1.000), $addWebkitToProp: false) {
+  @if $addWebkitToProp == true {
+    -webkit-transition: -webkit-#{$prop} $duration $easing;
+  } @else {
+    -webkit-transition: $prop $duration $easing;
+  }
+  transition: $prop $duration $easing;
+}
+
+@mixin transform($prop: all) {
+  -webkit-transform: $prop;
+  -ms-transform: $prop;
+  transform:  $prop;
+}
+
+@mixin ie($version: false) {
+  @if $version {
+    @if $version == 11 {
+      html.ie.ie11 & {
+        @content
+      }
+    }
+    @if $version == 10 {
+      @media screen {
+        html.ie.ie10 & {
+          @content
+        }
+      }
+    }
+    @if $version == 9 {
+      @media screen {
+        html.ie.ie9 & {
+          @content
+        }
+      }
+    }
+  }
+  @else {
+    html.ie & {
+      @content 
+    }
+  }
+}
+
+@mixin breakpoint($breakpoint, $value: null, $media: all) {
+  //  @param string $breakpoint: Name of a pre-specified breakpoint, or an integer to be used for max-width (for lazy people)
+  //  @param integer $value: If a variable breakpoint name is used, like "max-width", specify a value to which the breakpoint should respond to
+  //  @param string $media: Apply only to a specific media type
+  //  Move the "or" statement with "main-desktop-breakpoint" to where you want the main breakpoint to be, if you have one
+
+  @if $breakpoint == 'mobile-small' {
+    @media only #{$media} and (max-width: 320px) {
+      @content;
+    }
+  } @else if $breakpoint == 'mobile' {
+    @media only #{$media} and (min-width: 414px) {
+      @content;
+    }
+  } @else if $breakpoint == 'mobile-huge' {
+    @media only #{$media} and (min-width: 600px) {
+      @content;
+    }
+  } @else if $breakpoint == 'tablet-portrait' {
+    @media only #{$media} and (min-width: 768px) {
+      @content;
+    }
+  } @else if $breakpoint == 'tablet-landscape' {
+    @media only #{$media} and (min-width: 1000px) {
+      @content;
+    }
+  } @else if $breakpoint == 'desktop' {
+    @media only #{$media} and (min-width: 1200px) {
+      @content;
+    }
+  } @else if $breakpoint == 'laptop-height' {
+    @media only #{$media} and (min-width: 600px) and (max-height: 820px) {
+      @content;
+    }
+  } @else if $breakpoint == 'max-width' {
+    @media only #{$media} and (max-width: $value) {
+      @content;
+    }
+  } @else if $breakpoint == 'min-width' {
+    @media only #{$media} and (min-width: $value) {
+      @content;
+    }
+  } @else if $breakpoint == 'max-height' {
+    @media only #{$media} and (max-height: $value) {
+      @content;
+    }
+  } @else if $breakpoint == 'min-height' {
+    @media only #{$media} and (min-height: $value) {
+      @content;
+    }
+  } @else {
+    @media only #{$media} and (max-width: $breakpoint) {
+      @content;
+    }
+  }
+}
