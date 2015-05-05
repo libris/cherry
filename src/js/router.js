@@ -3,7 +3,7 @@ var _ = require('underscore')
 
 var handlers = {
   home: require('./components/home'),
-  detail: require('./components/detail'),
+  post: require('./components/detail'),
   404: require('./components/404')
 }
 
@@ -16,7 +16,7 @@ var Router = Backbone.Router.extend({
   },
   routes: {
     "": "home",
-    "detail" : "detail",
+    "post/:id" : "post",
     "*404": '404'
   },
   history: [],
