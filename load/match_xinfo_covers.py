@@ -39,6 +39,8 @@ def assemble_records(hits, from_es):
         parent_id = hit.get("_id")
         if parent_id and xinfo_record:
             xinfo_record.pop("modified")
+            coverArt = xinfo_record.pop("covertArt")
+            xinfo_record['coverArt'] = coverArt
             record_id = xinfo_record.get("@id")[1:].replace("isbn:", "").replace("/", ":")
 
             yield { '_index': 'cherry', '_type': 'cover', '_id': record_id, '_parent': parent_id, '_source': xinfo_record }

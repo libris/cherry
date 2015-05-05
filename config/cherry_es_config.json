@@ -367,7 +367,8 @@
                             },
                             "include_in_all": true,
                             "store": true,
-                            "type": "string"
+                            "type": "string",
+                            "copy_to": "author_title"
                         },
                         "givenName": {
                             "fields": {
@@ -378,7 +379,8 @@
                             },
                             "include_in_all": true,
                             "store": true,
-                            "type": "string"
+                            "type": "string",
+                            "copy_to": "author_title"
                         },
                         "name": {
                             "fields": {
@@ -389,7 +391,8 @@
                             },
                             "include_in_all": true,
                             "store": true,
-                            "type": "string"
+                            "type": "string",
+                            "copy_to": "author_title"
                         }
                     },
                     "type": "object"
@@ -481,7 +484,8 @@
                     },
                     "include_in_all": true,
                     "store": true,
-                    "type": "string"
+                    "type": "string",
+                    "copy_to": "author_title"
                 }
             }
         }

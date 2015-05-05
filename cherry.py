@@ -36,7 +36,7 @@ app.permanent_session_lifetime = timedelta(days=31)
 
 #app.config.from_object(__name__)
 
-es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, timeout=10)
+es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, sniffer_timeout=300, timeout=30)
 storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
                   access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
@@ -252,10 +252,28 @@ def find_preferred_cover(ident):
     return url
 
 
+@app.route('/api/flt_records_with_related')
+def api_flt_records_with_related():
+    query = request.args.get('q')
+    num_related = request.args.get('n')
+    t0 = time.time()
+
+    related = do_related_query(query, 3)['items']
+    flt = assemble_flt_records(' '.join(related + [query]))
+    flt['query'] = query
+    flt['relatedWords'] = related
+    flt['duration'] = "PT{0}S".format(time.time() - t0)
+
+    return json_response(flt)
+
 @app.route('/api/flt_records')
 def api_flt_records():
+    query = request.arg.get('q')
+    return json_response(assemble_flt_records(query))
+
+def assemble_flt_records(query):
     items = []
-    result = do_flt_query()
+    result = do_flt_query(20, query)
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
         parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
@@ -267,7 +285,7 @@ def api_flt_records():
 
     # TODO: add cover data
 
-    return json_response({"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items})
+    return {"@context":"/cherry.jsonld","totalResults":result.get('hits', {}).get('total', 0),"items":items}
 
 
 @app.route('/api/flt')
@@ -443,13 +461,16 @@ def api_suggest():
     return json.dumps(rtext)
 
 def cleanup(s):
-    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger"]
+    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger", "i"]
     print(s)
     stuff = ' '.join(w for w in s.split() if w not in noise_words_set)
     return stuff
 
 @app.route('/api/related')
 def api_related():
+    return json_response(do_related_query(request.args.get('q'), 10))
+
+def do_related_query(q, num_related):
     print("related")
     q = request.args.get('q')
     precision = 'y'
@@ -479,7 +500,7 @@ def api_related():
 
 
         }}}},
-        
+
         "aggs" : {
             "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
             "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
@@ -498,7 +519,7 @@ def api_related():
         app.logger.debug('error' + rtext.get('error'))
         err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
         err['exception'] = r.text
-        return json.dumps(err)
+        return err
 
     rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
     unique = []
@@ -506,7 +527,7 @@ def api_related():
         #unique = [t for t in rel_terms if q not in t]
         unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
         print("unique: ",unique)
-    return json.dumps({"items": unique[:10]})
+    return {"items": unique[:num_related]}
 
 @app.route('/api/children')
 def api_children():

@@ -8,7 +8,6 @@ var Tick = require('next-tick')
 
 
 module.exports = React.createClass({
-  displayName: 'HomeComponent',
   mixins: [Data.mixin],
   getDataDependencies: function() {
     return [{
