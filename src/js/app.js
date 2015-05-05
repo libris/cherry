@@ -21,8 +21,7 @@ module.exports = React.createClass({
     return (
       <Link onUp={ClickHandlers.onDeviceUp} onDown={ClickHandlers.onDeviceDown} onCancel={ClickHandlers.onDeviceCancel} >
         <header>
-          <a href="/">Home</a>
-          <a href="/detail">Detail</a>
+          <a className="btn" href="/">Home</a>
         </header>
         <Handler route={this.props.route} ref="handler" />
       </Link>
