@@ -235,6 +235,23 @@ def find_children(doc_type, parent_id):
     result = es.search(body=query, doc_type=doc_type, index='cherry')
     return [hit['_source'] for hit in result.get('hits', {}).get('hits', [])]
 
+def find_preferred_cover(ident):
+    images = find_children('cover', ident)
+    url = None
+    for image in images:
+        # TODO: fix this error in xinfo records and reload data
+        key = 'coverArt'
+        if not key in image:
+            key = 'covertArt'
+        if not url:
+            url = image[key]
+        if image['annotationSource']['name'] == "Smakprov":
+            # Found preferred image
+            url = image[key]
+
+    return url
+
+
 @app.route('/api/flt_records')
 def api_flt_records():
     items = []
@@ -243,7 +260,9 @@ def api_flt_records():
         ident = hit['fields']['_parent']
         parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
         parent_record['annotation'] = [hit['_source']]
-        parent_record['coverArt'] = find_children('cover', ident)
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url: 
+            parent_record['coverArt'] = cover_art_url
         items.append(parent_record)
 
     # TODO: add cover data
