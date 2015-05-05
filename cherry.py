@@ -235,6 +235,23 @@ def find_children(doc_type, parent_id):
     result = es.search(body=query, doc_type=doc_type, index='cherry')
     return [hit['_source'] for hit in result.get('hits', {}).get('hits', [])]
 
+def find_preferred_cover(ident):
+    images = find_children('cover', ident)
+    url = None
+    for image in images:
+        # TODO: fix this error in xinfo records and reload data
+        key = 'coverArt'
+        if not key in image:
+            key = 'covertArt'
+        if not url:
+            url = image[key]
+        if image['annotationSource']['name'] == "Smakprov":
+            # Found preferred image
+            url = image[key]
+
+    return url
+
+
 @app.route('/api/flt_records')
 def api_flt_records():
     items = []
@@ -243,7 +260,9 @@ def api_flt_records():
         ident = hit['fields']['_parent']
         parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
         parent_record['annotation'] = [hit['_source']]
-        parent_record['coverArt'] = find_children('cover', ident)
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url: 
+            parent_record['coverArt'] = cover_art_url
         items.append(parent_record)
 
     # TODO: add cover data
@@ -300,7 +319,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
 
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 10}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
             "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
             "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
@@ -423,7 +442,11 @@ def api_suggest():
 
     return json.dumps(rtext)
 
-
+def cleanup(s):
+    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger"]
+    print(s)
+    stuff = ' '.join(w for w in s.split() if w not in noise_words_set)
+    return stuff
 
 @app.route('/api/related')
 def api_related():
@@ -433,18 +456,39 @@ def api_related():
 
 
     query = {
-        "query" : { "filtered": { "filter": { "term": { "text": q }}}},
+        "query" : { "filtered": { "query": { 
+            "bool": {
+                "should": [
+                    {"has_parent" : {
+                        "parent_type" : "record",
+                        "query" : {
+                            "query_string": {
+                                "fields" : ["creator.familyName", "creator.givenName", "title"],
+                                "default_operator" : "AND",
+                                "query" : q
+                            }
+                        }
+                    }},
+                    {"flt": {
+                        "fields": ["text"],
+                        "like_text": q,
+                        "max_query_terms": 10,
+                        "prefix_length": 4
+                    }},
+                ]
+
+
+        }}}},
         
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 10}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
         }
 
     }
 
 
     t0 = time.time()
-    app.logger.debug("about to search")
     #HERE is the elastic search call
     r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
@@ -456,8 +500,13 @@ def api_related():
         err['exception'] = r.text
         return json.dumps(err)
 
-    return json.dumps(rtext)
-
+    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
+    unique = []
+    if rel_terms:
+        #unique = [t for t in rel_terms if q not in t]
+        unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
+        print("unique: ",unique)
+    return json.dumps({"items": unique[:10]})
 
 @app.route('/api/children')
 def api_children():
@@ -511,6 +560,11 @@ def api_trending():
         app.trends = all_trends(twitter, google)
 
     return json_response({"items": app.trends})
+
+        
+        
+
+
 
 @app.route('/api/json')
 def api_json():
