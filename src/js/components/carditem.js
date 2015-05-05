@@ -8,7 +8,7 @@ module.exports = React.createClass({
         <div className="cardItem">
         	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={114/200} />
         	<div className="information">
-        		{this.props.data.get('title')}
+        		{this.props.data.get('topic')}
         	</div>
         </div>
     )

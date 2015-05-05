@@ -10,7 +10,9 @@ var BaseCollection = Backbone.Collection.extend({
 
   dataUrl: null, 
 
-  listKey: 'result',
+  getCollectionList: function(result) {
+    return result.items
+  },
 
   cache: [],
 
@@ -32,20 +34,12 @@ var BaseCollection = Backbone.Collection.extend({
   insertData: function(result) {
     if ( !result ) 
       throw 'No JSON data found in response'
-    if ( !result.hasOwnProperty(this.listKey) )
-      throw 'Key "'+this.listKey+'" not found in response'
-    this._empty = !result[this.listKey].length
-    this.reset(result[this.listKey])
+    var list = this.getCollectionList(result)
+    this._empty = !list.length
+    this.reset(list)
     this._loading = false
     this.trigger('change')
     return result
-  },
-
-  insertDataFromCache: function(cache) {
-    this.cache = cache
-    cache.forEach(function(c) {
-      this.insertData({result: c[this.listKey]})
-    }, this)
   },
 
   invalidateCache: function() {

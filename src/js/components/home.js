@@ -15,8 +15,7 @@ module.exports = React.createClass({
   mixins: [Data.mixin],
   getDataDependencies: function() {
     return [{
-      collection: 'trending',
-      query: {q: 'apa'}
+      collection: 'trending'
     }]
   },
   getInitialState: function() {
