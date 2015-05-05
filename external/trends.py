@@ -38,10 +38,10 @@ def all_trends(*args):
     taken_topics = []
     for service in args:
         for t in service.trends():
+            # Eliminate duplicates
             if t not in taken_topics:
                 topics.append({"service":service.__repr__(), "topic":t})
             taken_topics.append(t.lower())
 
-    # Eliminate dulicates
     return topics
 
