@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#import psycopg2
+import psycopg2
 
 class Record:
     def __init__(self, identifier, data, dataset, entry, extradata):
