@@ -24,8 +24,7 @@ module.exports = React.createClass({
       return <p>Loading trending topics_</p>
     }
     var trends = trending.map(function(trend, i) {
-      console.log(trend)
-      return <div key={trend.cid}>{trend}</div>
+      return <div key={trend.cid}>{trend.get('topic')}</div>
     })
     return <div>{trends}</div>
   }

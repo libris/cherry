@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimal-ui">
   <meta charset="utf-8">
   <title>{{ title }}</title>
   <link href="/static/lib.css?{{hashes.libcss}}" rel="stylesheet" />
   <link href="/static/main.css?{{hashes.maincss}}" rel="stylesheet" />
-  <script>document.documentElement.className='js'</script>
+  <script>
+    var ie=function(){var e=3,n=document.createElement("div"),i=n.getElementsByTagName("i");do n.innerHTML="<!--[if gt IE "+ ++e+"]><i></i><![endif]-->";while(i[0]);return e>4?e:document.documentMode}();
+    document.documentElement.className='js'+(ie?' ie'+ie:'')
+  </script>
   <script src="/static/error.js"></script>
 </head>
 <body>

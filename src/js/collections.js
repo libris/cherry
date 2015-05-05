@@ -8,7 +8,12 @@ module.exports = CollectionFactory({
   },
   hits: {
     dataUrl: '/api/hits',
-    cacheTTL: 10,
+    getCollectionList: function(result) {
+      return [result]
+    }
+  },
+  posts: {
+    dataUrl: '/api/posts',
     getCollectionList: function(result) {
       return [result]
     }
