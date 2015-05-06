@@ -1,21 +1,21 @@
 var React = require('react')
 var ImageComponent = require('ainojs-react-image')
+var CreatorName = require('./creatorname')
 
 
 module.exports = React.createClass({
   render: function() {
     var data = this.props.data
-    return <div>{data['@id']}</div>
-    /*
+    // return <div>{data['@id']}</div>
+    
     return (
-        <a className="cardItem" href={ 'post/' + this.props.model.get('topic')}>
+        <a className="cardItem" href={ 'post' + data['@id']}>
         	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={114/200} />
         	<div className="information">
-        		<h1>{this.props.data.get('topic')}</h1>
-        		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        		<h1>{ data.title }</h1>
+                <h2><CreatorName creator={data.creator} /></h2>
         	</div>
         </a>
     )
-    */
   }
 })
