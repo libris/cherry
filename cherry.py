@@ -251,7 +251,11 @@ def find_preferred_cover(ident):
 @app.route('/api/flt_records_with_related')
 def api_flt_records_with_related():
     query = request.args.get('q')
-    num_related = int(request.args.get('n')) or 3
+    num_related = request.args.get('n')
+    if num_related:
+        num_related = int(num_related)
+    else:
+        num_related = 3
     print("num_related", num_related)
     t0 = time.time()
 
