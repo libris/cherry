@@ -27,11 +27,6 @@ module.exports = React.createClass({
       loading: true
     }
   },
-  triggerLazyLoad: function() {
-    var evt = document.createEvent('MouseEvent')
-    evt.initMouseEvent('scroll', true, true)
-    window.dispatchEvent(evt)
-  },
   plant: function(topic) {
     var hits = collections.get('hits')
     return new Promise(function(resolve, reject) {
