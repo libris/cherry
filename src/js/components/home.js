@@ -29,7 +29,7 @@ module.exports = React.createClass({
   plant: function(topic) {
     var hits = collections.get('hits')
     return new Promise(function(resolve, reject) {
-      collections.get('hits').load({q: topic}).then(function(response) {
+      collections.get('hits').load({q: topic}, true).then(function(response) {
         if ( !response.items.length || !response.query.relatedWords.length ) {
           hits.remove(hits.at(hits.length-1))
           reject(topic+' was not suitable for planting, trying another seed...')
@@ -44,7 +44,7 @@ module.exports = React.createClass({
       var plant = function(topic) {
         this.plant(topic).then(function(topic) {
           resolve(topic)
-        }).catch(function() {
+        }).catch(function(e) {
           topics.shift()
           topics.length ? plant(topics[0]) : reject('No more topics :(')
         })
@@ -77,11 +77,18 @@ module.exports = React.createClass({
       transitionDuration: 0
     })
   },
-  componentDidUpdate: function() {
-    this.masonry && this.masonry.update()
+  findSeeds: function() {
+    var hits = collections.get('hits')
+    var last = hits.at(hits.length-1)
+    var related = last.get('query').relatedWords
+    related.shift() // remove the first
+    this.sow(related).then(function() {
+      this.masonry.update(this.triggerLazyLoad)
+    }.bind(this))
   },
-  renderItems: function(hits) {
+  renderItems: function() {
     var content = null
+    var hits = collections.get('hits')
     if ( hits && hits.length ) {
       content = hits.map(function(model) {
         var items = model.get('items')
@@ -98,11 +105,12 @@ module.exports = React.createClass({
     if ( this.state.loading )
       content = <p>Loading trending topics_</p>
     else
-      content = this.renderItems(hits) || <div>Loading...</div>
+      content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
         <KeywordBar />
         <div ref="container">{content}</div>
+        <button onClick={this.findSeeds}>Plant some more</button>
       </div>
     )
   }
