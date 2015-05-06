@@ -22,6 +22,7 @@ blogs = {
     "bookbirds" : "http://www.blogger.com/feeds/6219321356983036215/posts/default",
     "sagorna" : "https://www.blogger.com/feeds/8641905497705737270/posts/default",
     "oarya" : "http://oarya.se/feed/atom/?paged={page}",
+    "bokhora" : "http://bokhora.se/feed/atom/?paged={page}"
 }
 
 
@@ -44,18 +45,23 @@ def consume(url, server):
 
         res = requests.get(next_page, stream=True, timeout=3600, headers={'Accept': 'application/atom+xml'})
 
-        xml_root = etree.parse(res.raw)
+        entries = []
+        try:
+            xml_root = etree.parse(res.raw)
 
-        blog_name = xml_root.findtext("{0}title".format(ATOM))
-        blog_subtitle = xml_root.findtext("{0}subtitle".format(ATOM))
+            blog_name = xml_root.findtext("{0}title".format(ATOM))
+            blog_subtitle = xml_root.findtext("{0}subtitle".format(ATOM))
 
-        blog_url= xml_root.findall("{0}link[@rel='alternate'][@type='text/html']".format(ATOM))[0].get("href")
+            blog_url= xml_root.findall("{0}link[@rel='alternate'][@type='text/html']".format(ATOM))[0].get("href")
 
-        entries = xml_root.findall("{0}entry".format(ATOM))
-        print("Found {0} entries on page {1}".format(len(entries), next_page))
+            entries = xml_root.findall("{0}entry".format(ATOM))
+            print("Found {0} entries on page {1}".format(len(entries), next_page))
 
-        next_link_elements = xml_root.findall("{0}link[@rel='next']".format(ATOM))
-        next_page = next_link_elements[0].get("href") if len(next_link_elements) > 0 else None
+            next_link_elements = xml_root.findall("{0}link[@rel='next']".format(ATOM))
+            next_page = next_link_elements[0].get("href") if len(next_link_elements) > 0 else None
+        except lxml.etree.XMLSyntaxError as ex:
+            print("Problem with page, trying next", ex)
+            next
 
         if len(entries) == 0:
             print("All posts consumed. Saving ...")
