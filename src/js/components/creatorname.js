@@ -7,7 +7,10 @@ module.exports = React.createClass({
 
     var composeName = function (obj) {
       if(obj['@type'] == 'Person'){
-        return obj.givenName + " " + obj.familyName;
+        if (!obj.givenName && !obj.familyName)
+          return ""
+
+        return [obj.givenName, obj.familyName].join(' ');
       } else if(obj['@type'] == 'Organization'){
         return obj.name;
       }
