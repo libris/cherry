@@ -57,15 +57,21 @@ module.exports = React.createClass({
       creator : {
         givenName : 'Sven',
         familyName : 'Svensson'
+      },
+      coverArt : {
+        url : "http://galleria.io/static/i/s2013/2m.jpg",
+        width : 220,
+        height : 160
       }
     }
+
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
 
     return (
     	<div className="detailView">
     		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
-        	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={160/220} />
+        	<ImageComponent src={ postMock.coverArt.url } lazy={true} ratio={ postMock.coverArt.height / postMock.coverArt.width} />
         </div>
     		<div className="information">
     			<h1>{ postMock.title }</h1>
