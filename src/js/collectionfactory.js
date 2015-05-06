@@ -31,12 +31,12 @@ var BaseCollection = Backbone.Collection.extend({
     return !!_.findWhere(this.cache, { q:q })
   },
 
-  insertData: function(result, append) {
+  insertData: function(result, options) {
     if ( !result ) 
       throw 'No JSON data found in response'
     var list = this.getCollectionList(result)
     this._empty = !list.length
-    append ? this.add(list) : this.reset(list)
+    options.append ? this.add(list) : this.reset(list)
     this._loading = false
     this.trigger('change')
     return result
@@ -50,13 +50,17 @@ var BaseCollection = Backbone.Collection.extend({
     })
   },
 
-  load: function(query, append) {
+  load: function(query, options) {
+
+    options = _.extend({
+      append: false
+    }, options)
 
     return new Promise(function(resolve, reject) {
 
       this._loading = true
       this._empty = false
-      append || this.reset()
+      options.append || this.reset()
 
       var q = query ? JSON.stringify(query) : ''
 
@@ -64,7 +68,7 @@ var BaseCollection = Backbone.Collection.extend({
       var cache = _.findWhere(this.cache, { q:q })
 
       if ( cache ) {
-        var result = this.insertData(cache, append)
+        var result = this.insertData(cache, options)
         return resolve(result)
       }
 
@@ -79,7 +83,7 @@ var BaseCollection = Backbone.Collection.extend({
           if ( err )
             return reject(err.code)
           if ( res.ok ) {
-            var result = this.insertData(res.body, append)
+            var result = this.insertData(res.body, options)
             resolve(result)
             this.cache.push(_.extend(result, {
               q: q,
