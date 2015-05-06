@@ -251,12 +251,14 @@ def find_preferred_cover(ident):
 @app.route('/api/flt_records_with_related')
 def api_flt_records_with_related():
     query = request.args.get('q')
-    num_related = request.args.get('n')
+    num_related = int(request.args.get('n')) or 3
+    print("num_related", num_related)
     t0 = time.time()
 
-    related = do_related_query(query, 3)['items']
-    flt = assemble_flt_records(' '.join(related + [query]))
-    flt['query'] = {'word':query,'relatedWords':related}
+    related = do_related_query(query)['items']
+    executed = ' '.join([query] + related[:num_related])
+    flt = assemble_flt_records(executed)
+    flt['query'] = {'word':query,'executed':executed,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
     return json_response(flt)
@@ -267,6 +269,7 @@ def api_flt_records():
     return json_response(assemble_flt_records(query))
 
 def assemble_flt_records(query):
+    print("assemble_flt_records. query:", query)
     items = []
     parent_ids = []
     result = do_flt_query(20, query)
@@ -474,7 +477,7 @@ def cleanup(s):
 def api_related():
     return json_response(do_related_query(request.args.get('q'), 10))
 
-def do_related_query(q, num_related):
+def do_related_query(q):
     print("related")
     q = request.args.get('q')
     precision = 'y'
@@ -544,7 +547,7 @@ def do_related_query(q, num_related):
 
         #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
         print("unique: ",unique)
-    return {"items": unique[:num_related]}
+    return {"items": unique}
 
 @app.route('/api/children')
 def api_children():
