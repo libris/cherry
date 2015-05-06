@@ -72,8 +72,8 @@ module.exports = React.createClass({
     var content = null
     var hits = collections.get('hits')
     if ( hits && hits.length ) {
-      content = hits.map(function(model) {
-        return <HitComponent model={model} />
+      content = hits.map(function(model, i) {
+        return <HitComponent key={model.cid} hideKeywords={!i} model={model} />
       })
     }
     return content

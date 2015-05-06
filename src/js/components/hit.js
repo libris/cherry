@@ -28,9 +28,10 @@ module.exports = React.createClass({
     var cards = (_.isArray(items) ? items : []).map(function(item, i) {
       return <CardItem key={i+':'+item['@id']} data={item} />
     })
+    var bar = this.props.hideKeywords ? null : <KeywordBar keywords={related} />
     return (
       <div className="hit">
-        <KeywordBar keywords={related} />
+        {bar}
         <div className="cards" ref="container">
           {cards}
         </div>
