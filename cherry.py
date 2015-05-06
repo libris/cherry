@@ -240,10 +240,10 @@ def find_preferred_cover(ident):
     url = None
     for image in images:
         if not url:
-            url = image['coverArt']
+            url = {"@type":"CoverArt","url":image['coverArt'],"height":image['height'],"width":image['width']}
         if image['annotationSource']['name'] == "Smakprov":
             # Found preferred image
-            url = image['coverArt']
+            url = {"@type":"CoverArt","url":image['coverArt'],"height":image['height'],"width":image['width']}
 
     return url
 
@@ -276,10 +276,11 @@ def assemble_flt_records(query):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = []
-    result = do_flt_query(20, query)
+    result = do_flt_query(50, query)
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
-        if not ident in parent_ids:
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url and not ident in parent_ids:
             parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
             hitlist_record = {
                               '@id': parent_record['@id'],
@@ -287,7 +288,7 @@ def assemble_flt_records(query):
                               'creator': parent_record['creator']
                              }
             hitlist_record['annotation'] = [hit['_source']]
-            cover_art_url = find_preferred_cover(ident)
+            #cover_art_url = find_preferred_cover(ident)
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
             items.append(hitlist_record)
