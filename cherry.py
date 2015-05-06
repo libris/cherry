@@ -239,15 +239,11 @@ def find_preferred_cover(ident):
     images = find_children('cover', ident)
     url = None
     for image in images:
-        # TODO: fix this error in xinfo records and reload data
-        key = 'coverArt'
-        if not key in image:
-            key = 'covertArt'
         if not url:
-            url = image[key]
+            url = image['coverArt']
         if image['annotationSource']['name'] == "Smakprov":
             # Found preferred image
-            url = image[key]
+            url = image['coverArt']
 
     return url
 
@@ -260,8 +256,7 @@ def api_flt_records_with_related():
 
     related = do_related_query(query, 3)['items']
     flt = assemble_flt_records(' '.join(related + [query]))
-    flt['query'] = query
-    flt['relatedWords'] = related
+    flt['query'] = {'word':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
     return json_response(flt)
@@ -284,7 +279,7 @@ def assemble_flt_records(query):
                               'title': parent_record['title'],
                               'creator': parent_record['creator']
                              }
-            #hitlist_record['annotation'] = [hit['_source']]
+            hitlist_record['annotation'] = [hit['_source']]
             cover_art_url = find_preferred_cover(ident)
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
@@ -529,7 +524,7 @@ def do_related_query(q, num_related):
         err['exception'] = r.text
         return err
 
-    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
