@@ -3,15 +3,17 @@ var _ = require('underscore')
 
 module.exports = React.createClass({
   render: function() {
-    var creatorList = [];
-    var creator = this.props.creator;
+    var creatorList = []
+    var creator = this.props.creator
+
+    if(typeof creator === 'undefined') return ''
 
     if(_.isArray(creator)){
       _.each(creator, function (item) {
-        creatorList.push(item.givenName + " " + item.familyName);   
+        creatorList.push(item.givenName + " " + item.familyName)
       })
     } else {
-      creatorList.push(creator.givenName + " " + creator.familyName);
+      creatorList.push(creator.givenName + " " + creator.familyName)
     }
 
     return (
