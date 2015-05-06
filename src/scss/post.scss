@@ -9,6 +9,16 @@
 		&.folded {
 			max-height: 150px;
 		}
+		@include breakpoint('tablet-portrait') {
+			width: 250px;
+			padding: 15px;
+			float: left;
+		}
+		@include breakpoint('tablet-landscape') {
+			width: 400px;
+			padding: 15px;
+			float: left;
+		}
 		@include breakpoint('desktop') {
 			width: 400px;
 			padding: 15px;

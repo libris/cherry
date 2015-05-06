@@ -76,6 +76,8 @@ a.btn {
 	border: 1px solid $button-blue;
 	margin: 0px 5px;
 	text-decoration: none;
+  line-height: 2;
+
 	&:hover {
 		background-color: $button-white;
 		color: $button-blue;
