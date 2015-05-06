@@ -240,10 +240,10 @@ def find_preferred_cover(ident):
     url = None
     for image in images:
         if not url:
-            url = image['coverArt']
+            url = {"@type":"CoverArt","url":image['coverArt'],"height":image['height'],"width":image['width']}
         if image['annotationSource']['name'] == "Smakprov":
             # Found preferred image
-            url = image['coverArt']
+            url = {"@type":"CoverArt","url":image['coverArt'],"height":image['height'],"width":image['width']}
 
     return url
 
@@ -252,11 +252,17 @@ def find_preferred_cover(ident):
 def api_flt_records_with_related():
     query = request.args.get('q')
     num_related = request.args.get('n')
+    if num_related:
+        num_related = int(num_related)
+    else:
+        num_related = 2
+    print("num_related", num_related)
     t0 = time.time()
 
-    related = do_related_query(query, 3)['items']
-    flt = assemble_flt_records(' '.join(related + [query]))
-    flt['query'] = {'word':query,'relatedWords':related}
+    related = do_related_query(query)['items']
+    executed = ' '.join([query] + related[:num_related])
+    flt = assemble_flt_records(executed)
+    flt['query'] = {'word':query,'executed':executed,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
     return json_response(flt)
@@ -267,20 +273,21 @@ def api_flt_records():
     return json_response(assemble_flt_records(query))
 
 def assemble_flt_records(query):
+    print("assemble_flt_records. query:", query)
     items = []
     parent_ids = []
-    result = do_flt_query(20, query)
+    result = do_flt_query(50, query)
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
-        if not ident in parent_ids:
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url and not ident in parent_ids:
             parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
             hitlist_record = {
                               '@id': parent_record['@id'],
                               'title': parent_record['title'],
                               'creator': parent_record['creator']
                              }
-            hitlist_record['annotation'] = [hit['_source']]
-            cover_art_url = find_preferred_cover(ident)
+            #hitlist_record['annotation'] = [hit['_source']]
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
             items.append(hitlist_record)
@@ -294,13 +301,14 @@ def assemble_flt_records(query):
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json_response(do_flt_query(size))
+    return json_response(do_flt_query(size, request.args.get('q'), request.args.get('doctype')))
 
-def do_flt_query(size=75, qstr=None, doctype='annotation'):
+def do_flt_query(size=75, qstr=None, doctype=None):
     """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
-    doctype = doctype if doctype else request.args.get('doctype')
+    if not doctype:
+        doctype=['annotation','excerpt']
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -330,7 +338,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
         }},
 
         #"fields": ["_parent", "name", "isPartOf.url", "text"],
-        "fields": ["_parent", "_source"],
+        "fields": ["_parent"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -339,13 +347,14 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
         #                      },
 
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
-        "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
-            "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+        # don't calculate aggs for flt. that is handled by related.
+        #"aggs" : {
+        #    "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+        #    "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
+        #    "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
 
-        }
+        #}
     }
     if t:
         query['query'] = {
@@ -384,6 +393,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
     app.logger.debug("about to search")
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
+    print("doc_type:",doctype)
     r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
@@ -473,13 +483,14 @@ def cleanup(s):
 def api_related():
     return json_response(do_related_query(request.args.get('q'), 10))
 
-def do_related_query(q, num_related):
+def do_related_query(q):
     print("related")
     q = request.args.get('q')
     precision = 'y'
 
 
     query = {
+        "size": 0,
         "query" : { "filtered": { "query": { 
             "bool": {
                 "should": [
@@ -506,7 +517,7 @@ def do_related_query(q, num_related):
 
         "aggs" : {
             "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
+            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
         }
 
     }
@@ -528,9 +539,21 @@ def do_related_query(q, num_related):
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
-        unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
+        for i in rel_terms:
+            if q not in i["key"]:
+                w = cleanup(i["key"])
+                ok = True
+                for u in unique:
+                    if w in u:
+                        print("{0} not ok because {1}".format(w, u))
+                        ok = False
+                if ok:
+                    unique.append(w)
+
+
+        #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
         print("unique: ",unique)
-    return {"items": unique[:num_related]}
+    return {"items": unique}
 
 @app.route('/api/children')
 def api_children():
@@ -595,7 +618,7 @@ def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
 
-@app.route('/record/<path:recordpath>')
+@app.route('/bok/<path:recordpath>')
 def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)
     ident = recordpath.replace("/", "")
