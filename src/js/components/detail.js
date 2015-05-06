@@ -2,6 +2,7 @@ var React = require('react')
 var posts = require('../collections').get('posts')
 var Data = require('../data')
 var ImageComponent = require('ainojs-react-image')
+var CreatorName = require('./creatorname')
 
 module.exports = React.createClass({
 
@@ -28,6 +29,18 @@ module.exports = React.createClass({
 	},
 	*/
 
+  getInitialState: function() {
+    return {
+      coverFolded: true
+    }
+  },
+
+  toggleFold: function () {
+    this.setState({
+      coverFolded: !this.state.coverFolded
+    })
+  },
+
   render: function() {
   	/*
   	if ( this.state.loading ) {
@@ -38,16 +51,29 @@ module.exports = React.createClass({
   	})
   	console.log('title', post.get('title'))
   	*/
+
+    var postMock = {
+      title : 'Testpost',
+      creator : {
+        givenName : 'Sven',
+        familyName : 'Svensson'
+      }
+    }
+    var coverClasses = ['cover']
+    this.state.coverFolded && coverClasses.push('folded')
+
     return (
     	<div className="detailView">
-    		<div className="cover">
+    		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
         	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={160/220} />
         </div>
     		<div className="information">
-    			<h1>Header</h1>
-    			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    			<h1>{ postMock.title }</h1>
+    			<h2><CreatorName creator={ postMock.creator } /></h2>
     			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
     			<a className="btn">Kolla ett smakprov!</a>
+    			<hr />
+    			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
     		</div>
     	</div>
     	)
