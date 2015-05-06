@@ -339,13 +339,14 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
         #                      },
 
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
-        "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
-            "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+        # don't calculate aggs for flt. that is handled by related.
+        #"aggs" : {
+        #    "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+        #    "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
+        #    "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
 
-        }
+        #}
     }
     if t:
         query['query'] = {
@@ -480,6 +481,7 @@ def do_related_query(q, num_related):
 
 
     query = {
+        "size": 0,
         "query" : { "filtered": { "query": { 
             "bool": {
                 "should": [
@@ -506,7 +508,7 @@ def do_related_query(q, num_related):
 
         "aggs" : {
             "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
+            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
         }
 
     }
@@ -528,7 +530,19 @@ def do_related_query(q, num_related):
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
-        unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
+        for i in rel_terms:
+            if q not in i["key"]:
+                w = cleanup(i["key"])
+                ok = True
+                for u in unique:
+                    if w in u:
+                        print("{0} not ok because {1}".format(w, u))
+                        ok = False
+                if ok:
+                    unique.append(w)
+
+
+        #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
         print("unique: ",unique)
     return {"items": unique[:num_related]}
 
@@ -595,7 +609,7 @@ def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
 
-@app.route('/record/<path:recordpath>')
+@app.route('/bok/<path:recordpath>')
 def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)
     ident = recordpath.replace("/", "")
