@@ -259,10 +259,10 @@ def api_flt_records_with_related():
     print("num_related", num_related)
     t0 = time.time()
 
-    related = do_related_query(query)['items']
-    executed = ' '.join([query] + related[:num_related])
-    flt = assemble_flt_records(executed)
-    flt['query'] = {'word':query,'executed':executed,'relatedWords':related}
+    #related = do_related_query(query)['items']
+    #executed = ' '.join([query] + related[:num_related])
+    flt = assemble_flt_records(query)
+    #flt['query'] = {'words':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
     return json_response(flt)
@@ -277,6 +277,8 @@ def assemble_flt_records(query):
     items = []
     parent_ids = []
     result = do_flt_query(50, query)
+    qmeta = get_related_words_from_query_result(result, query)
+
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
         cover_art_url = find_preferred_cover(ident)
@@ -293,9 +295,7 @@ def assemble_flt_records(query):
             items.append(hitlist_record)
         parent_ids.append(ident)
 
-    # TODO: add cover data
-
-    return {"@context":"/cherry.jsonld","items":items}
+    return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
 
 
 @app.route('/api/flt')
@@ -348,13 +348,13 @@ def do_flt_query(size=75, qstr=None, doctype=None):
 
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
         # don't calculate aggs for flt. that is handled by related.
-        #"aggs" : {
-        #    "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+        "aggs" : {
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
         #    "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
         #    "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
 
-        #}
+        }
     }
     if t:
         query['query'] = {
@@ -483,6 +483,28 @@ def cleanup(s):
 def api_related():
     return json_response(do_related_query(request.args.get('q'), 10))
 
+def get_related_words_from_query_result(rtext, q):
+    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
+    unique = []
+    if rel_terms:
+        #unique = [t for t in rel_terms if q not in t]
+        for i in rel_terms:
+            if q not in i["key"]:
+                w = cleanup(i["key"])
+                ok = True
+                for u in unique:
+                    if w in u:
+                        print("{0} not ok because {1}".format(w, u))
+                        ok = False
+                if ok:
+                    unique.append(w)
+
+
+        #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
+        print("unique: ",unique)
+    return unique
+
+
 def do_related_query(q):
     print("related")
     q = request.args.get('q')
@@ -535,25 +557,7 @@ def do_related_query(q):
         err['exception'] = r.text
         return err
 
-    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
-    unique = []
-    if rel_terms:
-        #unique = [t for t in rel_terms if q not in t]
-        for i in rel_terms:
-            if q not in i["key"]:
-                w = cleanup(i["key"])
-                ok = True
-                for u in unique:
-                    if w in u:
-                        print("{0} not ok because {1}".format(w, u))
-                        ok = False
-                if ok:
-                    unique.append(w)
-
-
-        #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
-        print("unique: ",unique)
-    return {"items": unique}
+    return {"items": get_related_words_from_query_result(rtext) }
 
 @app.route('/api/children')
 def api_children():
