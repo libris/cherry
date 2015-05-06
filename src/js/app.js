@@ -20,6 +20,11 @@ module.exports = React.createClass({
     var Handler = Router.getRouteHandler(this.props.route.name) || <NotFound />
     return (
       <Link onUp={ClickHandlers.onDeviceUp} onDown={ClickHandlers.onDeviceDown} onCancel={ClickHandlers.onDeviceCancel} >
+        <header>
+          <a className="top" href="">Topplistor</a>
+          <a className="winners" href="">Prisvinnare</a>
+          <a className="trends" href="">Trender</a>
+        </header>
         <Handler route={this.props.route} ref="handler" />
       </Link>
     )
