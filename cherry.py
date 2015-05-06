@@ -490,7 +490,7 @@ def get_related_words_from_query_result(rtext, q):
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if i["key"] not in q.split():
+            if not i["key"].isdigit() and i["key"] not in q.split():
                 w = cleanup(i["key"])
                 ok = True
                 for u in unique:
