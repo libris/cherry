@@ -9,13 +9,13 @@ module.exports = React.createClass({
     // return <div>{data['@id']}</div>
     
     return (
-        <a className="cardItem" href={ 'post/1'}>
-        	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={114/200} />
-        	<div className="information">
-        		<h1>{ data.title }</h1>
-                <h2><CreatorName creator={data.creator} /></h2>
-        	</div>
-        </a>
+      <a className="cardItem" href={ 'post/1'}>
+      	<ImageComponent src={ data.coverArt.url } lazy={true} ratio={ data.coverArt.height / data.coverArt.width} />
+      	<div className="information">
+      		<h1>{ data.title }</h1>
+          <h2><CreatorName creator={data.creator} /></h2>
+      	</div>
+      </a>
     )
   }
 })

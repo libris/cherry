@@ -4,6 +4,8 @@
 @import "post";
 @import "carditem";
 
+@import url(http://fonts.googleapis.com/css?family=Patua+One);
+
 /*
 -----------
 BREAKPOINTS
@@ -19,7 +21,7 @@ tablet-landscape > 1000
 desktop > 1200
 */
 
-body{background:$bg-color;margin: 20px 0}
+body{background:$bg-color;margin: 0}
 
 .image-container {
   background: rgba(0,0,0,.05);
@@ -57,26 +59,12 @@ body{background:$bg-color;margin: 20px 0}
     left: 0;
   }
 }
-header {
-	width: 100%;
-	background-color: $item-bg-color;
-	padding: 10px;
-	position: fixed;
-	top: 0px;
-	z-index: 5000;
-	box-shadow: 0px 10px 15px 0px rgba(0, 0, 0, 0.5);	
-}
+
 a.btn {
-	font-family: $font-btn;
-	font-weight: 500;
-	padding: 2px 4px;
-	border-radius: 5px;
 	color: $button-white;
 	background-color: $button-blue;
 	border: 1px solid $button-blue;
-	margin: 0px 5px;
 	text-decoration: none;
-  line-height: 2;
 
 	&:hover {
 		background-color: $button-white;
@@ -84,10 +72,51 @@ a.btn {
 		border: 1px solid $button-blue;
 	}
 }
+
+.keyword {
+  margin: 10px 7px;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 700;
+  text-transform: lowercase;
+  font-weight: bolder;
+  line-height: 2;
+}
 .content {
 	margin: 0px 50px;
 }
 .keywordBar {
-	margin: 10px;
-	font-size: 14pt;
+  padding: 10px 0px;
+  width: 100%;
+	font-size: 18pt;
+  overflow: scroll;
 }
+
+
+header {
+  width: 100%;
+  a {
+    width: 100%;
+    display: block;
+    text-decoration: none;
+    color: #fff;
+    padding: 5px;
+    text-align: center;
+    font-size: 28pt;
+    font-family: $font-headers;
+    &.top {
+      background-color: $pale-orange;
+    }
+    &.winners {
+      background-color: $orange;
+    }
+    &.trends {
+      background-color: $pale-brown;
+    }
+  
+  }
+}
+
+
+
+

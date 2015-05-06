@@ -1,7 +1,7 @@
 .cardItem {
-	padding: 0px;
-	margin: 7px 5px;
-	width: 190px;
+	padding: 0px 0px;
+	margin: 7px 10px;
+	width: 128px;
 	@include breakpoint('tablet-portrait') {
 		width: 240px;
 	}
@@ -16,6 +16,7 @@
  	color: $dark-grey;
   .information {
   	h1 {
+  		font-family: $font-headers;
   		margin: 0px;
   		font-size: 12pt;
   		font-weight: 500;
@@ -31,5 +32,6 @@
   	font-size: 12pt;
   	font-family: $font-content;
   	font-weight: 200;
+  	border-radius: 0px 0px 5px 5px;
   }
 }

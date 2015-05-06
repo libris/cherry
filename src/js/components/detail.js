@@ -57,21 +57,33 @@ module.exports = React.createClass({
       creator : {
         givenName : 'Sven',
         familyName : 'Svensson'
+      },
+      coverArt : {
+        url : "http://galleria.io/static/i/s2013/2m.jpg",
+        width : 220,
+        height : 160
       }
     }
+
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
 
     return (
     	<div className="detailView">
     		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
-        	<ImageComponent src="http://galleria.io/static/i/s2013/2m.jpg" lazy={true} ratio={160/220} />
+        	<ImageComponent src={ postMock.coverArt.url } lazy={true} ratio={ postMock.coverArt.height / postMock.coverArt.width} />
         </div>
     		<div className="information">
     			<h1>{ postMock.title }</h1>
     			<h2><CreatorName creator={ postMock.creator } /></h2>
-    			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-    			<a className="btn">Kolla ett smakprov!</a>
+          <p className="providerDate">2092</p>
+          <i className="fa fa-2x fa-quote-right"></i>
+          <p className="quote">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </p>
+    			<a className="btn keyword">
+            Kolla ett smakprov!
+          </a>
     			<hr />
     			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
     		</div>

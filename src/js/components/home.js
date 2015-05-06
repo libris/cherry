@@ -1,13 +1,19 @@
 var React = require('react')
 var Data = require('../data')
 var collections = require('../collections')
-var CardItem = require('./carditem')
-var KeywordBar = require('./keywordbar')
-var Masonry = require('../masonry')
+var HitComponent = require('./hit')
 var $ = require('jquery')
 var Tick = require('next-tick')
 var _ = require('underscore')
 var Promise = require('promise')
+
+var chopArray = function(array, range) {
+  range = range || 3
+  var ret = []
+  while(array.length)
+    ret.push(array.splice(0, range).join(' '))
+  return ret
+}
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -21,15 +27,10 @@ module.exports = React.createClass({
       loading: true
     }
   },
-  triggerLazyLoad: function() {
-    var evt = document.createEvent('MouseEvent')
-    evt.initMouseEvent('scroll', true, true)
-    window.dispatchEvent(evt)
-  },
   plant: function(topic) {
     var hits = collections.get('hits')
     return new Promise(function(resolve, reject) {
-      collections.get('hits').load({q: topic}, true).then(function(response) {
+      collections.get('hits').load({ q: topic }, { append: true }).then(function(response) {
         if ( !response.items.length || !response.query.relatedWords.length ) {
           hits.remove(hits.at(hits.length-1))
           reject(topic+' was not suitable for planting, trying another seed...')
@@ -42,9 +43,7 @@ module.exports = React.createClass({
   sow: function(topics) {
     return new Promise(function(resolve, reject) {
       var plant = function(topic) {
-        this.plant(topic).then(function(topic) {
-          resolve(topic)
-        }).catch(function(e) {
+        this.plant(topic).then(resolve).catch(function(e) {
           topics.shift()
           topics.length ? plant(topics[0]) : reject('No more topics :(')
         })
@@ -60,41 +59,21 @@ module.exports = React.createClass({
       var topics = collections.get('trending').map(function(model) {
         return model.get('topic')
       })
-      this.sow(topics).then(function(response) {
-        this.masonry.init(this.refs.container.getDOMNode())
-        this.masonry.update(this.triggerLazyLoad)
-      }.bind(this)).catch(function(e) {
-        throw new Error(e)
-      })
-    })
-  },
-  componentWillUnmount: function() {
-    // Destroy masonry
-    this.masonry.destroy()
-  },
-  componentDidMount: function() {
-    this.masonry = new Masonry({
-      transitionDuration: 0
+      this.sow( chopArray(topics, 1) )
     })
   },
   findSeeds: function() {
     var hits = collections.get('hits')
     var last = hits.at(hits.length-1)
-    var related = last.get('query').relatedWords
-    related.shift() // remove the first
-    this.sow(related).then(function() {
-      this.masonry.update(this.triggerLazyLoad)
-    }.bind(this))
+    var related = chopArray(last.get('query').relatedWords, 3)
+    this.sow(related)
   },
   renderItems: function() {
     var content = null
     var hits = collections.get('hits')
     if ( hits && hits.length ) {
-      content = hits.map(function(model) {
-        var items = model.get('items')
-        return (_.isArray(items) ? items : []).map(function(item, i) {
-          return <CardItem key={i+':'+item['@id']} data={item} />
-        })
+      content = hits.map(function(model, i) {
+        return <HitComponent key={model.cid} hideKeywords={!i} model={model} />
       })
     }
     return content
@@ -108,7 +87,11 @@ module.exports = React.createClass({
       content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
-        <KeywordBar />
+        <header>
+          <a className="top" href="">Topplistor</a>
+          <a className="winners" href="">Prisvinnare</a>
+          <a className="trends" href="">Trender</a>
+        </header>
         <div ref="container">{content}</div>
         <button onClick={this.findSeeds}>Plant some more</button>
       </div>

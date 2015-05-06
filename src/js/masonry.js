@@ -23,8 +23,8 @@ module.exports.prototype = {
     typeof cb == 'function' && Tick(cb)
   },
 
-  initializeMasonry: function(force) {
-    if (!this.masonry || force) {
+  initializeMasonry: function() {
+    if (!this.masonry) {
       this.masonry = new Masonry(this.node, this.options)
       this.domChildren = this.getNewDomChildren()
     }

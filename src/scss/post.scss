@@ -1,13 +1,16 @@
 .detailView {
 	min-height: 100vh;
-	margin: 5px;
+	margin: 0;
   background-color: $item-bg-color;
 	.cover {
-		margin: 0px 0px 0px 0px;
+		margin: 0;
 		width: 100%;
 		overflow: hidden;
 		&.folded {
 			max-height: 150px;
+			@include breakpoint('tablet-portrait') {
+				max-height: none;
+			}
 		}
 		@include breakpoint('tablet-portrait') {
 			width: 250px;
@@ -29,16 +32,33 @@
 		padding: 10px 10px;
   	font-family: $font-content;
   	font-weight: 200;
+  	word-wrap: break-word;
+  	color: $dark-grey;
   	h1 {
+  		font-family: $font-headers;
   		margin: 0px;
   		font-weight: 200;
   	}
   	h2 {
+  		font-family: $font-content;
   		margin: 0px;
   		font-weight: 200;
   	}
   	p {
   		padding: 0px;
+  	}
+  	.fa { color: $darker-grey }
+  	.providerDate {
+  		margin: 0px 0px 50px 0px;
+  		font-family: $font-content;
+  		font-size: 17pt;
+  		font-weight: bold;
+  	}
+  	.quote {
+  		margin: 0px;
+  		font-family: $font-content;
+  		font-style: italic;
+  		font-size: 14pt;
   	}
   	hr {
   		border: 0;
@@ -47,3 +67,4 @@
   	}
 	}
 }
+
