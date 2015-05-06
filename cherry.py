@@ -277,7 +277,7 @@ def assemble_flt_records(query):
     items = []
     parent_ids = []
     result = do_flt_query(50, query)
-    qmeta = get_related_words_from_query_result(result, query)
+    qmeta = {"word":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
@@ -489,7 +489,7 @@ def get_related_words_from_query_result(rtext, q):
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if q not in i["key"]:
+            if i["key"] not in q.split():
                 w = cleanup(i["key"])
                 ok = True
                 for u in unique:
