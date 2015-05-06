@@ -6,6 +6,7 @@ var KeywordBar = require('./keywordbar')
 var Masonry = require('../masonry')
 var $ = require('jquery')
 var Tick = require('next-tick')
+var _ = require('underscore')
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -19,16 +20,25 @@ module.exports = React.createClass({
       loading: true
     }
   },
+  appendHits: function(word, cb) {
+    return collections.get('hits').load({q: word}).then(function(response) {
+      typeof cb == 'function' && cb.call(this, response)
+    }.bind(this))
+  },
+  triggerLazyLoad: function() {
+    var evt = document.createEvent('MouseEvent')
+    evt.initMouseEvent('scroll', true, true)
+    window.dispatchEvent(evt)
+  },
   dataDidLoad: function() {
     this.setState({
       loading: false
     }, function() {
-      collections.get('hits').load({q: 'deklarera'}).then(function(response) {
-        this.masonry.init(this.refs.container.getDOMNode(), function() {
-          var evt = document.createEvent('MouseEvent')
-          evt.initMouseEvent('scroll', true, true)
-          window.dispatchEvent(evt)
-        })
+      // load first seed
+      var seed = collections.get('trending').at(0).get('title')
+      this.appendHits(seed, function(response) {
+        this.masonry.init(this.refs.container.getDOMNode())
+        this.masonry.update(this.triggerLazyLoad)
       })
     })
   },
@@ -41,18 +51,24 @@ module.exports = React.createClass({
       transitionDuration: 0
     })
   },
+  componentDidUpdate: function() {
+    this.masonry && this.masonry.update()
+  },
   render: function() {
     var content = null
+    var hits = collections.get('hits')
     if ( this.state.loading ) {
       content = <p>Loading trending topics_</p>
     } else {
-      var hits = collections.get('hits').getModel({ query: 'deklarera' })
-      if ( hits && hits.get('items') ) {
-        content = hits.get('items').map(function(item, i) {
-          return <CardItem key={i+':'+item['@id']} data={item} />
+      if ( hits && hits.length ) {
+        content = hits.map(function(model) {
+          var items = model.get('items')
+          return (_.isArray(items) ? items : []).map(function(item, i) {
+            return <CardItem key={i+':'+item['@id']} data={item} />
+          })
         })
       } else {
-        content = <p>Loading results</p>
+        content = <div>Loading results</div>
       }
     }
     return (

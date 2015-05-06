@@ -13,16 +13,14 @@ module.exports.prototype = {
   
   domChildren: [],
 
-  init: function(node, cb) {
+  init: function(node) {
     this.node = node
     this.initializeMasonry()
-    this.update()
-    if ( typeof cb == 'function' )
-      Tick(cb)
   },
 
-  update: function() {
-    this.performLayout()
+  update: function(cb) {
+    this.node && this.performLayout()
+    typeof cb == 'function' && Tick(cb)
   },
 
   initializeMasonry: function(force) {
