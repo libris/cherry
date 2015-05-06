@@ -255,7 +255,7 @@ def api_flt_records_with_related():
     if num_related:
         num_related = int(num_related)
     else:
-        num_related = 3
+        num_related = 2
     print("num_related", num_related)
     t0 = time.time()
 
@@ -301,13 +301,14 @@ def assemble_flt_records(query):
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json_response(do_flt_query(size))
+    return json_response(do_flt_query(size, request.args.get('q'), request.args.get('doctype')))
 
-def do_flt_query(size=75, qstr=None, doctype='annotation'):
+def do_flt_query(size=75, qstr=None, doctype=None):
     """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
-    doctype = doctype if doctype else request.args.get('doctype')
+    if not doctype:
+        doctype=['annotation','excerpt']
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -337,7 +338,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
         }},
 
         #"fields": ["_parent", "name", "isPartOf.url", "text"],
-        "fields": ["_parent", "_source"],
+        "fields": ["_parent"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -392,6 +393,7 @@ def do_flt_query(size=75, qstr=None, doctype='annotation'):
     app.logger.debug("about to search")
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
+    print("doc_type:",doctype)
     r = es.search(body=query, index='cherry', doc_type=doctype)
     app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
