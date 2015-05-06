@@ -256,12 +256,13 @@ def api_flt_records_with_related():
         num_related = int(num_related)
     else:
         num_related = 2
-    print("num_related", num_related)
-    t0 = time.time()
+    excluded_ids = [ident.replace("/", "") for ident in request.args.get('exclude','').split(",")]
+    print("excluded_ids", excluded_ids)
 
+    t0 = time.time()
     #related = do_related_query(query)['items']
     #executed = ' '.join([query] + related[:num_related])
-    flt = assemble_flt_records(query)
+    flt = assemble_flt_records(query, excluded_ids)
     #flt['query'] = {'words':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
@@ -272,10 +273,10 @@ def api_flt_records():
     query = request.args.get('q')
     return json_response(assemble_flt_records(query))
 
-def assemble_flt_records(query):
+def assemble_flt_records(query, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
-    parent_ids = []
+    parent_ids = excluded_ids
     result = do_flt_query(50, query)
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
@@ -489,7 +490,7 @@ def get_related_words_from_query_result(rtext, q):
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if i["key"] not in q.split():
+            if not i["key"].isdigit() and i["key"] not in q.split():
                 w = cleanup(i["key"])
                 ok = True
                 for u in unique:
