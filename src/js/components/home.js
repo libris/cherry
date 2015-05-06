@@ -87,6 +87,11 @@ module.exports = React.createClass({
       content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
+        <header>
+          <a className="top" href="">Topplistor</a>
+          <a className="winners" href="">Prisvinnare</a>
+          <a className="trends" href="">Trender</a>
+        </header>
         <div ref="container">{content}</div>
         <button onClick={this.findSeeds}>Plant some more</button>
       </div>
