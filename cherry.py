@@ -287,8 +287,7 @@ def assemble_flt_records(query):
                               'title': parent_record['title'],
                               'creator': parent_record['creator']
                              }
-            hitlist_record['annotation'] = [hit['_source']]
-            #cover_art_url = find_preferred_cover(ident)
+            #hitlist_record['annotation'] = [hit['_source']]
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
             items.append(hitlist_record)
