@@ -42,9 +42,7 @@ module.exports = React.createClass({
   sow: function(topics) {
     return new Promise(function(resolve, reject) {
       var plant = function(topic) {
-        this.plant(topic).then(function(topic) {
-          resolve(topic)
-        }).catch(function(e) {
+        this.plant(topic).then(resolve).catch(function(e) {
           topics.shift()
           topics.length ? plant(topics[0]) : reject('No more topics :(')
         })
