@@ -8,6 +8,9 @@
 		overflow: hidden;
 		&.folded {
 			max-height: 150px;
+			@include breakpoint('tablet-portrait') {
+				max-height: none;
+			}
 		}
 		@include breakpoint('tablet-portrait') {
 			width: 250px;
@@ -30,6 +33,7 @@
   	font-family: $font-content;
   	font-weight: 200;
   	h1 {
+  		font-family: $font-headers;
   		margin: 0px;
   		font-weight: 200;
   	}
