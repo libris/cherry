@@ -277,7 +277,7 @@ def assemble_flt_records(query):
     items = []
     parent_ids = []
     result = do_flt_query(50, query)
-    qmeta = {"word":query, "relatedWords":get_related_words_from_query_result(result, query)}
+    qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
