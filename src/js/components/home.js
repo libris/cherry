@@ -9,6 +9,14 @@ var Tick = require('next-tick')
 var _ = require('underscore')
 var Promise = require('promise')
 
+var chopArray = function(array, range) {
+  range = range || 3
+  var ret = []
+  while(array.length)
+    ret.push(array.splice(0, range).join(' '))
+  return ret
+}
+
 module.exports = React.createClass({
   mixins: [Data.mixin],
   getDataDependencies: function() {
@@ -58,7 +66,7 @@ module.exports = React.createClass({
       var topics = collections.get('trending').map(function(model) {
         return model.get('topic')
       })
-      this.sow(topics).then(function(response) {
+      this.sow( chopArray(topics, 1) ).then(function(response) {
         this.masonry.init(this.refs.container.getDOMNode())
         this.masonry.update(this.triggerLazyLoad)
       }.bind(this)).catch(function(e) {
