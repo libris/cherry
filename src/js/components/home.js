@@ -6,6 +6,8 @@ var KeywordBar = require('./keywordbar')
 var Masonry = require('../masonry')
 var $ = require('jquery')
 var Tick = require('next-tick')
+var _ = require('underscore')
+var Promise = require('promise')
 
 module.exports = React.createClass({
   mixins: [Data.mixin],
@@ -19,16 +21,50 @@ module.exports = React.createClass({
       loading: true
     }
   },
+  triggerLazyLoad: function() {
+    var evt = document.createEvent('MouseEvent')
+    evt.initMouseEvent('scroll', true, true)
+    window.dispatchEvent(evt)
+  },
+  plant: function(topic) {
+    var hits = collections.get('hits')
+    return new Promise(function(resolve, reject) {
+      collections.get('hits').load({q: topic}, true).then(function(response) {
+        if ( !response.items.length || !response.query.relatedWords.length ) {
+          hits.remove(hits.at(hits.length-1))
+          reject(topic+' was not suitable for planting, trying another seed...')
+        } else {
+          resolve(topic)
+        }
+      })
+    })
+  },
+  sow: function(topics) {
+    return new Promise(function(resolve, reject) {
+      var plant = function(topic) {
+        this.plant(topic).then(function(topic) {
+          resolve(topic)
+        }).catch(function(e) {
+          topics.shift()
+          topics.length ? plant(topics[0]) : reject('No more topics :(')
+        })
+      }.bind(this)
+      plant(topics[0])
+    }.bind(this))
+  },
   dataDidLoad: function() {
     this.setState({
       loading: false
     }, function() {
-      collections.get('hits').load({q: 'deklarera'}).then(function(response) {
-        this.masonry.init(this.refs.container.getDOMNode(), function() {
-          var evt = document.createEvent('MouseEvent')
-          evt.initMouseEvent('scroll', true, true)
-          window.dispatchEvent(evt)
-        })
+      // load first seed
+      var topics = collections.get('trending').map(function(model) {
+        return model.get('topic')
+      })
+      this.sow(topics).then(function(response) {
+        this.masonry.init(this.refs.container.getDOMNode())
+        this.masonry.update(this.triggerLazyLoad)
+      }.bind(this)).catch(function(e) {
+        throw new Error(e)
       })
     })
   },
@@ -41,24 +77,40 @@ module.exports = React.createClass({
       transitionDuration: 0
     })
   },
-  render: function() {
+  findSeeds: function() {
+    var hits = collections.get('hits')
+    var last = hits.at(hits.length-1)
+    var related = last.get('query').relatedWords
+    related.shift() // remove the first
+    this.sow(related).then(function() {
+      this.masonry.update(this.triggerLazyLoad)
+    }.bind(this))
+  },
+  renderItems: function() {
     var content = null
-    if ( this.state.loading ) {
-      content = <p>Loading trending topics_</p>
-    } else {
-      var hits = collections.get('hits').getModel({ query: 'deklarera' })
-      if ( hits && hits.get('items') ) {
-        content = hits.get('items').map(function(item, i) {
+    var hits = collections.get('hits')
+    if ( hits && hits.length ) {
+      content = hits.map(function(model) {
+        var items = model.get('items')
+        return (_.isArray(items) ? items : []).map(function(item, i) {
           return <CardItem key={i+':'+item['@id']} data={item} />
         })
-      } else {
-        content = <p>Loading results</p>
-      }
+      })
     }
+    return content
+  },
+  render: function() {
+    var content = null
+    var hits = collections.get('hits')
+    if ( this.state.loading )
+      content = <p>Loading trending topics_</p>
+    else
+      content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
         <KeywordBar />
         <div ref="container">{content}</div>
+        <button onClick={this.findSeeds}>Plant some more</button>
       </div>
     )
   }
