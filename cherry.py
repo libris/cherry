@@ -23,6 +23,8 @@ import operator
 from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
+from search import *
+from nltk.metrics import edit_distance
 
 pp = pprint.PrettyPrinter(indent=1)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -74,7 +76,7 @@ def api_search():
     if q:
         qq['filtered']['query']['bool']['should'].append({ 
             "has_child": {
-                        "type": ["annotation"],
+                        "type": ["excerpt"],
                         "query": {
 
                             "query_string" : {
@@ -117,10 +119,8 @@ def api_search():
             "child_content": {
                 "children": {"type": "annotation"},
         "aggs" : {
-            "unigrams_gnd" : {"significant_terms" : {"field" : "text", "size": 50, "gnd": {}}},
-            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 50}},
-            "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 50, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 50}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 50, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 50, "gnd": {}}},
 
 
         }}},
@@ -129,7 +129,7 @@ def api_search():
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
                                     },
-                                    "aggregations.text.shingles": {  
+                                    "aggregations.text.bigrams": {  
                                         "fragment_size": 100,
                                         "number_of_fragments": 3,
                                         "force_source": 'true'
@@ -165,7 +165,7 @@ def api_search():
     t0 = time.time()
     app.logger.debug("about to search")
     #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type='record')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='record')
     app.logger.debug("did search {0}".format(time.time() - t0))
     return json.dumps(r)
 
@@ -176,25 +176,6 @@ def api_search():
         err['exception'] = r.text
         return json.dumps(err)
 
-    if q and rtext.get('hits', {}).get('hits', None):
-        for ch, hit in enumerate(rtext['hits']['hits']):
-            for cs, s in enumerate(hit['highlight']['text']):
-                a = re.sub('<[^>]*>', '', s)
-                print(a)
-                #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
-
-        try:
-            for ch, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
-                try:
-                    for cs, s in enumerate(hit.get('highlight', {}).get('text', [])):
-                        a = re.sub('<[^>]*>', '', s)
-                        print(a)
-                        rtext['hits']['hits'][ch]['highlight']['text'][cs] = a
-                except Exception as e:
-                    app.logger.error("Highlights enumerate fail: {0}".format(e))
-                    continue
-        except Exception as e:
-            app.logger.error("Hits enumeration failed: {0}".format(e))
 
     #rtext["hits_total"] = rtext["hits"]["total"]
     #return jsonify(rtext)
@@ -214,7 +195,7 @@ def child_texts(p):
             }
         }
     } }
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
     hits = r.get('hits', {}).get('hits', [])
     texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
     return texts
@@ -232,7 +213,7 @@ def find_children(doc_type, parent_id):
             }
         }
     }
-    result = es.search(body=query, doc_type=doc_type, index='cherry')
+    result = es.search(body=query, doc_type=doc_type, index=app.config['CHERRY'])
     return [hit['_source'] for hit in result.get('hits', {}).get('hits', [])]
 
 def find_preferred_cover(ident):
@@ -277,14 +258,14 @@ def assemble_flt_records(query, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = excluded_ids
-    result = do_flt_query(50, query)
+    result = do_flt_query(es, size=50, q=query, index_name=app.config['CHERRY'])
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
         cover_art_url = find_preferred_cover(ident)
         if cover_art_url and not ident in parent_ids:
-            parent_record = es.get_source(index='cherry',doc_type='record',id=ident)
+            parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
             hitlist_record = {
                               '@id': parent_record['@id'],
                               'title': parent_record['title'],
@@ -302,9 +283,9 @@ def assemble_flt_records(query, excluded_ids=[]):
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json_response(do_flt_query(size, request.args.get('q'), request.args.get('doctype')))
+    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype'), index_name=app.config['CHERRY']))
 
-def do_flt_query(size=75, qstr=None, doctype=None):
+def old_do_flt_query(size=75, qstr=None, doctype=None):
     """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
@@ -351,8 +332,8 @@ def do_flt_query(size=75, qstr=None, doctype=None):
         # don't calculate aggs for flt. that is handled by related.
         "aggs" : {
             "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
-            #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+            #"bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 10, "gnd": {}}},
+            #"bigrams_gnd" : {"significant_terms" : {"field" : "text.bigrams", "size": 10}},
 
 
         }
@@ -395,7 +376,7 @@ def do_flt_query(size=75, qstr=None, doctype=None):
     #HERE is the elastic search call
     #r = requests.post(app.config['ELASTIC_URI'] + '/_search?pretty=true', data = json.dumps(query))
     print("doc_type:",doctype)
-    r = es.search(body=query, index='cherry', doc_type=doctype)
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type=doctype)
     app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
     return r
@@ -418,15 +399,6 @@ def api_suggest():
     q = request.args.get('q')
     precision = 'y'
 
-    qq = {
-        "query_string" : {
-            "default_field" : "text",
-            "default_operator" : "AND",
-            "query" : q,
-
-        }
-    } if q and q != '*' else {}
-
     query = {
         "sort" : [],
         "size" : 75,
@@ -437,13 +409,13 @@ def api_suggest():
             "text" : q,
             "simple_phrase" : {
                 "phrase" : {
-                    "field" : "text",#suggest multiple fields? _all?
+                    "field" : "author_title.shingles",
                     "size" : 2,
                     "real_word_error_likelihood" : 0.95,
                     "max_errors" : 3,
                     "gram_size" : 2,
                     "direct_generator" : [ {
-                        "field" : "text",
+                        "field" : "author_title.shingles",
                         "suggest_mode" : "popular",
                         "min_word_length" : 1
                     } ],
@@ -456,11 +428,8 @@ def api_suggest():
 
 
     t0 = time.time()
-    app.logger.debug("about to search")
-    #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='record')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    #return r.text
 
     rtext = r
     if rtext.get('status', 0):
@@ -474,11 +443,101 @@ def api_suggest():
 
     return json.dumps(rtext)
 
-def cleanup(s):
-    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger", "i"]
-    print(s)
-    stuff = ' '.join(w for w in s.split() if w not in noise_words_set)
-    return stuff
+
+@app.route('/api/complete')
+def api_complete():
+    """Complete takes >= 3 chars, and returns a json list containing completed parts of phrase plus suggestions and the number of hits for each suggestion, sorted by frequency."""
+    q = request.args.get('q')
+
+    
+    n = 500
+    qq = {
+        "match" : {
+            "author_title": q
+        }
+        } if q and q != '*' else { "match_all": {} }
+    query = {
+            "_source" : [ "highlight"],
+            "query" : qq,
+            "size": n,
+
+
+            "highlight" : {
+                "fields" : {
+                    "author_title" : { "fragment_size": "50", "number_of_fragments" : 5,  "term_vector":"with_positions_offsets" }
+                    }
+                }}
+
+
+    highlights = []
+    try:
+        r = es.search(index=suggestIndex, body=query)
+        rtext = r
+        if rtext.get('status', 0):
+            err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
+            err['exception'] = r.text
+
+        if rtext.get('hits', {}).get('hits', None):
+            try:
+                for i, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
+                    try:
+                        for j, c in enumerate(hit.get('highlight', {}).get('suggest', [])):
+                            #[ highlights.append("{0} {1}".format(q_head,s.lower())) for s in re.findall('<em>(.*?)</em>', c) ]
+                            [ highlights.append(q_head+' '+s.lower()) for s in re.findall('<em>(.*?)</em>', c) ]
+                    except Exception as e:
+                        app.logger.error("Enumerate fail: {0}".format(e))
+                        continue
+            except Exception as e:
+                app.logger.error("Hits enumeration failed: {0}".format(e))
+    except Exception as e:
+        app.logger.error("Search failed: {0}".format(e))
+
+    hl_counter=collections.Counter(highlights)
+    hl_sorted = sorted(
+        hl_counter.iteritems(),
+        key=operator.itemgetter(1),
+        reverse=True
+    )[:10]
+    return json.dumps({"suggestions": hl_sorted})
+    return json.dumps({"suggestions": list(set(highlights))})
+
+@app.route('/api/blogtrends')
+def api_blogtrends():
+    """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt. Lägg till begränsning tidsintervall när fältet är indexerat."""
+    q = request.args.get('q')
+    query = {
+        "fields": "aggregations",
+   #     "query": {
+
+   #         "query_string" : {
+   #             "fields" : ["text", "name"],
+   #             "default_operator" : "AND",
+   #             "query" : q,
+
+   #         }
+   #     },
+        "query": {
+            "constant_score" : {
+                "filter" : {
+                    "range" : {
+                        "created" : {
+                            "gte": "2015-01-01",
+                            "lte": "now"
+                        }
+                    }
+                }
+            }
+        },
+        "aggs" : {
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 300, "gnd": {}}},
+    }
+    }
+
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
+    #return json.dumps(r)
+
+    u = get_related_words_from_query_result(r, '')
+    return json.dumps({"items": u})
 
 @app.route('/api/related')
 def api_related():
@@ -486,20 +545,20 @@ def api_related():
 
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
-    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if not i["key"].isdigit() and i["key"] not in q.split() and q not in i["key"]:
-                w = cleanup(i["key"])
-                ok = True
-                for u in unique:
-                    if w in u:
-                        print("{0} not ok because {1}".format(w, u))
-                        ok = False
-                if ok:
-                    unique.append(w)
+            if not i["key"].isdigit() and edit_distance(i["key"], q) > 3:
+                unique.append(i["key"])
+               # ok = True
+               # for u in unique:
+               #     if edit_distance(i["key"], u) < 4:
+               #         print("{0} not ok because {1}".format(i["key"], u))
+               #         ok = False
+               # if ok:
+               #     unique.append(i["key"])
 
 
         #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
@@ -522,7 +581,7 @@ def do_related_query(q):
                         "parent_type" : "record",
                         "query" : {
                             "query_string": {
-                                "fields" : ["creator.familyName", "creator.givenName", "title"],
+                                "default_field" : "author_title",
                                 "default_operator" : "AND",
                                 "query" : q
                             }
@@ -541,7 +600,7 @@ def do_related_query(q):
 
         "aggs" : {
             "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
+            #"bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
         }
 
     }
@@ -549,7 +608,7 @@ def do_related_query(q):
 
     t0 = time.time()
     #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
     return r
 
@@ -601,23 +660,21 @@ def api_children():
         }
 
     }
-    r = es.search(body=query, index='cherry', doc_type='record')
-    #r = es.search(body=query, index='cherry')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='record')
+    #r = es.search(body=query, index=app.config['CHERRY'])
     return json.dumps(r)
-
-# TODO: Find better caching
-app.trends = {}
 
 @app.route('/api/trending')
 def api_trending():
-    if not app.trends:
-        app.trends = all_trends(twitter, google)
+    t0 = time.time()
+    try:
+        with open('trending_topics.txt', 'r') as f:
+            topics = eval(f.read())
+    except:
+        print("No trend file found. Loading (unchecked) from scratch.")
+        topics = all_trends(google, twitter)
 
-    return json_response({"items": app.trends})
-
-        
-        
-
+    return json_response({"items": topics, "duration": "PT{0}S".format(time.time() - t0)})
 
 
 @app.route('/api/json')
@@ -629,7 +686,7 @@ def api_json():
 def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)
     ident = recordpath.replace("/", "")
-    record = es.get_source(index='cherry', doc_type='record', id=ident)
+    record = es.get_source(index=app.config['CHERRY'], doc_type='record', id=ident)
     if record:
         record['annotation'] = find_children('annotation', ident)
         record['excerpt'] = find_children('excerpt', ident)
