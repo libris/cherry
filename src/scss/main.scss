@@ -60,13 +60,13 @@ body{background:$bg-color;margin: 0}
   }
 }
 
-a.btn {
+.btn {
 	color: $button-white;
 	background-color: $button-blue;
 	border: 1px solid $button-blue;
 	text-decoration: none;
 
-	&:hover {
+	&[data-active] {
 		background-color: $button-white;
 		color: $button-blue;
 		border: 1px solid $button-blue;
@@ -81,6 +81,19 @@ a.btn {
   text-transform: lowercase;
   font-weight: bolder;
   line-height: 2;
+}
+.taste {
+  font-size: 20pt;
+  color: $button-white;
+  background-color: $button-blue;
+  border: 1px solid $button-blue;
+  display: block;
+  font-family: $font-content;
+  margin: 20px auto;
+  border-radius: 8px;
+  padding: 15px 20px;
+  font-weight: 700 !important;
+  font-weight: bolder;
 }
 .content {
 	margin: 0px 50px;
