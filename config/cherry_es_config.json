@@ -18,6 +18,7 @@
                         "lowercase",
                         "type_as_payload"
                     ],
+                    "char_filter": ["html_strip"],
                     "tokenizer": "standard",
                     "type": "custom"
                 },
@@ -30,11 +31,19 @@
                         "shingle_filter"
                     ]
                 },
+                "bigram_analyzer": {
+                    "type":             "custom",
+                    "tokenizer":        "whitespace",
+                    "filter": [
+                        "lowercase",
+                        "stopword_filter",
+                        "bigram_filter"
+                    ]
+                },
                 "unigram_analyzer": {
                     "type":             "custom",
                     "tokenizer":        "whitespace",
                     "filter": [
-                        "letter",
                         "lowercase",
                         "stopword_filter"
                     ]
@@ -47,6 +56,12 @@
                     "type": "edge_ngram"
                 },
                 "shingle_filter": {
+                    "type":             "shingle",
+                    "min_shingle_size": 2,
+                    "max_shingle_size": 2,
+                    "output_unigrams":  true
+                },
+                "bigram_filter": {
                     "type":             "shingle",
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
@@ -80,10 +95,10 @@
                     "term_vector": "with_positions_offsets_payloads",
                     "type": "string",
                     "fields": {
-                        "shingles": {
-                            "type":     "string",
+                        "bigram": {
+                            "type": "string",
                             "term_vector": "with_positions_offsets_payloads",
-                            "analyzer": "shingle_analyzer"
+                            "analyzer": "bigram_analyzer"
                         },
                         "unigrams": {
                             "type": "string",
@@ -182,6 +197,12 @@
                 "type": "record"
             },
             "properties": {
+                "created": {
+                    "include_in_all": false,
+                    "index": "not_analyzed",
+                    "store": true,
+                    "type": "date"
+                },
                 "annotationSource": {
                     "properties": {
                         "@type": {
@@ -296,7 +317,13 @@
                 "author_title": {
                     "index_analyzer": "autocomplete",
                     "store": true,
-                    "type": "string"
+                    "type": "string",
+                    "fields": {
+                        "shingles": {
+                            "type": "string",
+                            "analyzer": "shingle_analyzer"
+                        }
+                    }
                 },
                 "classification": {
                     "properties": {

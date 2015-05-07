@@ -258,7 +258,7 @@ def assemble_flt_records(query, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = excluded_ids
-    result = do_flt_query(es, size=50, q=query)
+    result = do_flt_query(es, size=50, q=query, index_name=app.config['CHERRY'])
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
@@ -283,7 +283,7 @@ def assemble_flt_records(query, excluded_ids=[]):
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype')))
+    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype'), index_name=app.config['CHERRY']))
 
 def old_do_flt_query(size=75, qstr=None, doctype=None):
     """Will search annotations if no other doctype is given."""

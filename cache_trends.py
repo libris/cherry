@@ -7,10 +7,10 @@ from elasticsearch import Elasticsearch
 
 CONFIG_FILE = 'config.cfg'
 
-def verify_trends(trends, es):
+def verify_trends(trends, es, index):
     hot_trends = []
     for trend in trends:
-        results = do_flt_query(es, size=1, q=trend['topic'])
+        results = do_flt_query(es, size=1, q=trend['topic'], index=index)
         if results["hits"]["total"] > 0:
             hot_trends.append(trend)
 
@@ -25,6 +25,6 @@ if __name__ == "__main__":
                       consumer_secret=TWITTER_CONSUMER_SECRET)
     google = Google()
     trends = all_trends(google, twitter)
-    hot_trends = verify_trends(trends, es)
+    hot_trends = verify_trends(trends, es, CHERRY)
     with open('trending_topics.txt', 'w') as f:
         f.write(str(hot_trends))
