@@ -506,7 +506,7 @@ def api_blogtrends():
     """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt. Lägg till begränsning tidsintervall när fältet är indexerat."""
     q = request.args.get('q')
     query = {
-        "fields": "aggregations",
+        #"fields": "aggregations",
    #     "query": {
 
    #         "query_string" : {
@@ -529,11 +529,11 @@ def api_blogtrends():
             }
         },
         "aggs" : {
-            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 300, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 3000, "gnd": {}}},
     }
     }
 
-    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
+    r = es.search(body=query, index=app.config['CHERRY'], doc_type='blog')
     #return json.dumps(r)
 
     u = get_related_words_from_query_result(r, '')
