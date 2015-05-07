@@ -4,3 +4,4 @@ awesome-slugify==1.6.2
 lxml==3.4.2
 python-magic==0.4.6
 Pillow==2.8.1
+nltk==3.0.2

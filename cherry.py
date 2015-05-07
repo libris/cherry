@@ -23,6 +23,7 @@ import operator
 from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
+from nltk.metrics import edit_distance
 
 pp = pprint.PrettyPrinter(indent=1)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -484,7 +485,7 @@ def cleanup(s):
 def api_related():
     return json_response(do_related_query(request.args.get('q')))
 
-def get_related_words_from_query_result(rtext, q):
+def get_related_words_from_query_result(rtext, q):#missar vi nåt om vi även tar bort alla sammansättningar? kaffe -> kaffekopp är inte nödvändigtvis kass, eller?
     t0 = time.time()
     rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
