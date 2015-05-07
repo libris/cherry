@@ -2,6 +2,6 @@ var React = require('react')
 
 module.exports = React.createClass({
   render: function() {
-    return '404'
+    return <h1>404</h1>
   }
 })

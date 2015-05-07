@@ -7,6 +7,8 @@ var Link = require('./fastlink')
 var PubSub = require('ainojs-pubsub')
 var _ = require('underscore')
 
+console.log(Router)
+
 Backbone.$ = require('jquery')
 
 // This runs in the browser

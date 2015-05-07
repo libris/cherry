@@ -6,6 +6,17 @@ var ClickHandlers = require('./clickhandlers')
 var Router = require('./router')
 var NotFound = require('./components/404')
 
+var HomeComponent = require('./components/home')
+var PostComponent = require('./components/detail')
+var NotFoundComponent = require('./components/404')
+
+var handlers = {
+  trends: HomeComponent,
+  winners: HomeComponent,
+  toplist: HomeComponent,
+  post: PostComponent,
+  404: NotFoundComponent 
+}
 
 // Contains the skeleton of the App
 module.exports = React.createClass({
@@ -17,7 +28,7 @@ module.exports = React.createClass({
     }, this)
   },
   render: function() {
-    var Handler = Router.getRouteHandler(this.props.route.name) || <NotFound />
+    var Handler = handlers[this.props.route.name] || <NotFound />
     return (
       <Link onUp={ClickHandlers.onDeviceUp} onDown={ClickHandlers.onDeviceDown} onCancel={ClickHandlers.onDeviceCancel} >
         <Handler route={this.props.route} ref="handler" />

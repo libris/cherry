@@ -1,23 +1,20 @@
 var Backbone = require('backbone')
 var _ = require('underscore')
 
-var handlers = {
-  home: require('./components/home'),
-  post: require('./components/detail'),
-  404: require('./components/404')
-}
-
 var Router = Backbone.Router.extend({
   initialize: function() {
+
+    this.route(/.*/, '404')
+    this.route(/^post\/([^\/]+)$/, 'post')
+    this.route(/^trends(\/\?(.*))?$/, 'trends')
+    this.route(/^winners(\/\?(.*))?$/, 'winners')
+    this.route(/^toplist(\/\?(.*))?$/, 'toplist')
+    this.route(/^$/, 'trends')
+
     this.route(/(.*)\/+$/, "trailFix", function (id) {
       // remove all trailing slashes if more than one
-      this.navigate(id.replace(/(\/)+$/, ''), true);
+      this.navigate(id.replace(/(\/)+$/, ''), true)
     })
-  },
-  routes: {
-    "": "home",
-    "post/:id" : "post",
-    "*404": '404'
   },
   history: [],
   crumbs: [],
@@ -42,12 +39,9 @@ var Router = Backbone.Router.extend({
       props.params = match.slice(1, match.length-1)
     }
     return props
-  },
-  getRouteHandler: function(name) {
-    if ( name in handlers )
-      return handlers[name]
-    return null
   }
 })
 
-module.exports = new Router()
+var router = new Router()
+console.log('router', router)
+module.exports = router

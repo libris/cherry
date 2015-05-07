@@ -92,10 +92,9 @@ a.btn {
   overflow: scroll;
 }
 
-
 header {
   width: 100%;
-  a {
+  .categories a {
     width: 100%;
     display: block;
     text-decoration: none;
@@ -113,7 +112,15 @@ header {
     &.trends {
       background-color: $pale-brown;
     }
-  
+  }
+  .trendbar {
+    overflow: auto;
+    white-space: nowrap;
+    a {
+      display: inline-block;
+      padding: 0 16px;
+      height: 30px;
+    }
   }
 }
 
