@@ -22,7 +22,7 @@
                 },
                 "shingle_analyzer": {
                     "type":             "custom",
-                    "tokenizer":        "standard",
+                    "tokenizer":        "letter",
                     "filter": [
                         "lowercase",
                         "stopword_filter",
@@ -31,7 +31,7 @@
                 },
                 "unigram_analyzer": {
                     "type":             "custom",
-                    "tokenizer":        "standard",
+                    "tokenizer":        "letter",
                     "filter": [
                         "lowercase",
                         "stopword_filter"
