@@ -30,7 +30,7 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
         }},
 
         #"fields": ["_parent", "name", "isPartOf.url", "text"],
-        "fields": ["_parent"],
+        "fields": ["_parent", "_source"],
         #"_source" :[],
         #        "highlight" : { "fields" : { "summary" : {"type": "plain"}},
         #                        "pre_tags" : ["<1>"],
@@ -84,7 +84,7 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
     #app.logger.debug("about to search")
     #print("doc_type:",doctype)
     #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type=doctype)
+    r = es.search(body=query, index='cherry4' doc_type=doctype)
     #app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
     return r

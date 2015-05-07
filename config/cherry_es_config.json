@@ -25,7 +25,6 @@
                     "type":             "custom",
                     "tokenizer":        "whitespace",
                     "filter": [
-                        "letter",
                         "lowercase",
                         "stopword_filter",
                         "shingle_filter"
