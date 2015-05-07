@@ -94,6 +94,12 @@ def inverse_annotation_lookup(c):
                             "fields": ["text", "name", "url"],
                             "query": '"{0} {1}"'.format(c.givenName, c.familyName),
                         }
+                    },
+                    {
+                        "query_string": {
+                            "field": ["isPartOf.name"],
+                            "query": '"Bokhora"'
+                        }
                     }
                 ]
             }
@@ -188,5 +194,5 @@ def iterate_backbone():
 
 if __name__ == "__main__":
     #cleanup_candidates()
-    #iterate_backbone()
+    iterate_backbone()
     dedup_candidates()

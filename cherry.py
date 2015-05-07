@@ -118,7 +118,7 @@ def api_search():
                 "children": {"type": "annotation"},
         "aggs" : {
             "unigrams_gnd" : {"significant_terms" : {"field" : "text", "size": 50, "gnd": {}}},
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 50}},
+            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 50}},
             "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 50, "gnd": {}}},
             "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 50}},
 
@@ -309,7 +309,7 @@ def do_flt_query(size=75, qstr=None, doctype=None):
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
     if not doctype:
-        doctype=['annotation','excerpt']
+        doctype=['annotation', 'excerpt']
     frm = request.args.get('from')
     to = request.args.get('to')
     sort = request.args.get('sort')
@@ -350,9 +350,9 @@ def do_flt_query(size=75, qstr=None, doctype=None):
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
         # don't calculate aggs for flt. that is handled by related.
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-        #    "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
-        #    "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
+            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
+            #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
 
         }
@@ -482,15 +482,16 @@ def cleanup(s):
 
 @app.route('/api/related')
 def api_related():
-    return json_response(do_related_query(request.args.get('q'), 10))
+    return json_response(do_related_query(request.args.get('q')))
 
 def get_related_words_from_query_result(rtext, q):
+    t0 = time.time()
     rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if not i["key"].isdigit() and i["key"] not in q.split():
+            if not i["key"].isdigit() and i["key"] not in q.split() and q not in i["key"]:
                 w = cleanup(i["key"])
                 ok = True
                 for u in unique:
@@ -503,12 +504,12 @@ def get_related_words_from_query_result(rtext, q):
 
         #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))
         print("unique: ",unique)
+    print("elapsed", time.time()-t0)
     return unique
 
 
 def do_related_query(q):
     print("related")
-    q = request.args.get('q')
     precision = 'y'
 
 
@@ -539,7 +540,7 @@ def do_related_query(q):
         }}}},
 
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
+            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
             #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
         }
 
@@ -550,6 +551,7 @@ def do_related_query(q):
     #HERE is the elastic search call
     r = es.search(body=query, index='cherry', doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
+    return r
 
     rtext = r
     if rtext.get('status', 0):
@@ -558,7 +560,7 @@ def do_related_query(q):
         err['exception'] = r.text
         return err
 
-    return {"items": get_related_words_from_query_result(rtext) }
+    return {"items": get_related_words_from_query_result(rtext, q) }
 
 @app.route('/api/children')
 def api_children():

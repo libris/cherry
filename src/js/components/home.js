@@ -27,11 +27,6 @@ module.exports = React.createClass({
       loading: true
     }
   },
-  triggerLazyLoad: function() {
-    var evt = document.createEvent('MouseEvent')
-    evt.initMouseEvent('scroll', true, true)
-    window.dispatchEvent(evt)
-  },
   plant: function(topic) {
     var hits = collections.get('hits')
     return new Promise(function(resolve, reject) {
@@ -77,8 +72,8 @@ module.exports = React.createClass({
     var content = null
     var hits = collections.get('hits')
     if ( hits && hits.length ) {
-      content = hits.map(function(model) {
-        return <HitComponent model={model} />
+      content = hits.map(function(model, i) {
+        return <HitComponent key={model.cid} hideKeywords={!i} model={model} />
       })
     }
     return content

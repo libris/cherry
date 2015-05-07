@@ -28,6 +28,14 @@
                         "stopword_filter",
                         "shingle_filter"
                     ]
+                },
+                "unigram_analyzer": {
+                    "type":             "custom",
+                    "tokenizer":        "standard",
+                    "filter": [
+                        "lowercase",
+                        "stopword_filter"
+                    ]
                 }
             },
             "filter": {
@@ -74,6 +82,10 @@
                             "type":     "string",
                             "term_vector": "with_positions_offsets_payloads",
                             "analyzer": "shingle_analyzer"
+                        },
+                        "unigrams": {
+                            "type": "string",
+                            "analyzer": "unigram_analyzer"
                         }
                     }
                 }
