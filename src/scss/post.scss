@@ -79,8 +79,26 @@
   				margin-left: 10px;
   			}
   		}
+  		.opinionText {
+  			&.folded {
+  				.readMore {
+  					display: block;
+  					margin: auto;
+  					color: $dark-grey;
+  					font-weight: 700;
+  					border: 2px solid $blue;
+  					border-radius: 5px;
+  					background-color: #fff;
+  					padding: 5px 15px;
+  				}
+  			}
+  			.readMore {
+  				display: none;
+  			}
+  		}
   		border: solid $lighty-grey;
   		border-width: 0px 0px 2px 0px;
+  		padding: 0px 0px 20px 0px;
   	}
 	}
 }
