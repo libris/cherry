@@ -32,8 +32,10 @@ module.exports = React.createClass({
     return (
       <div className="hit">
         {bar}
-        <div className="cards" ref="container">
-          {cards}
+        <div className="cards">
+          <div className="cards-inner" ref="container">
+            {cards}
+          </div>
         </div>
       </div>
     )
