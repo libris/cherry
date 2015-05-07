@@ -517,16 +517,17 @@ def api_blogtrends():
    #         }
    #     },
         "query": {
-            "constant_score" : {
-                "filter" : {
-                    "range" : {
-                        "created" : {
-                            "gte": "2015-01-01",
-                            "lte": "now"
-                        }
-                    }
-                }
-            }
+            "match_all": {}
+       #     "constant_score" : {
+       #         "filter" : {
+       #             "range" : {
+       #                 "created" : {
+       #                     "gte": "2015-01-01",
+       #                     "lte": "now"
+       #                 }
+       #             }
+       #         }
+       #     }
         },
         "aggs" : {
             "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 3000, "gnd": {}}},
@@ -545,7 +546,7 @@ def api_related():
 
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
-    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
