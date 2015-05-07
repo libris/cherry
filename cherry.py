@@ -517,16 +517,17 @@ def api_blogtrends():
    #         }
    #     },
         "query": {
-            "constant_score" : {
-                "filter" : {
-                    "range" : {
-                        "created" : {
-                            "gte": "2015-01-01",
-                            "lte": "now"
-                        }
-                    }
-                }
-            }
+            "match_all": {}
+       #     "constant_score" : {
+       #         "filter" : {
+       #             "range" : {
+       #                 "created" : {
+       #                     "gte": "2015-01-01",
+       #                     "lte": "now"
+       #                 }
+       #             }
+       #         }
+       #     }
         },
         "aggs" : {
             "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 3000, "gnd": {}}},

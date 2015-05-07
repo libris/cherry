@@ -1,6 +1,13 @@
 {
     "settings": {
         "analysis": {
+            "char_filter": {
+                "remove_nonalphas": {
+                    "type": "pattern_replace",
+                    "pattern": "[^\\p{IsAlphabetic} ]",
+                    "replacement": ""
+                }
+            },
             "analyzer": {
                 "autocomplete": {
                     "filter": [
@@ -38,7 +45,8 @@
                         "lowercase",
                         "stopword_filter",
                         "bigram_filter"
-                    ]
+                    ],
+                    "char_filter": ["remove_nonalphas"]
                 },
                 "unigram_analyzer": {
                     "type":             "custom",
@@ -59,7 +67,7 @@
                     "type":             "shingle",
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
-                    "output_unigrams":  true
+                    "output_unigrams":  false
                 },
                 "bigram_filter": {
                     "type":             "shingle",
@@ -97,7 +105,6 @@
                     "fields": {
                         "bigrams": {
                             "type": "string",
-                            "term_vector": "with_positions_offsets_payloads",
                             "analyzer": "bigram_analyzer"
                         },
                         "unigrams": {
