@@ -6,6 +6,7 @@ var $ = require('jquery')
 var Tick = require('next-tick')
 var _ = require('underscore')
 var Promise = require('promise')
+var Menu = require('./menu')
 
 var chopArray = function(array, range) {
   range = range || 3
@@ -24,7 +25,8 @@ module.exports = React.createClass({
   },
   getInitialState: function() {
     return {
-      loading: true
+      loading: true,
+      main_nav: 0
     }
   },
   plant: function(topic) {
@@ -87,11 +89,7 @@ module.exports = React.createClass({
       content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
-        <header>
-          <a className="top" href="">Topplistor</a>
-          <a className="winners" href="">Prisvinnare</a>
-          <a className="trends" href="">Trender</a>
-        </header>
+        <Menu />
         <div ref="container">{content}</div>
         <button onClick={this.findSeeds}>Plant some more</button>
       </div>

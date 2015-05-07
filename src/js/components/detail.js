@@ -86,7 +86,7 @@ module.exports = React.createClass({
             Kolla ett smakprov!
           </button>
         </div>
-        <div className="info-section opinions">
+        <div className="info-section opinionList">
     			<h1>Vad tycker andra?</h1>
           <Opinion />
           <Opinion />
