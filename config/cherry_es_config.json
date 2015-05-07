@@ -95,7 +95,7 @@
                     "term_vector": "with_positions_offsets_payloads",
                     "type": "string",
                     "fields": {
-                        "bigram": {
+                        "bigrams": {
                             "type": "string",
                             "term_vector": "with_positions_offsets_payloads",
                             "analyzer": "bigram_analyzer"
