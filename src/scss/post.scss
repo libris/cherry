@@ -28,12 +28,21 @@
 			float: left;
 		}
 	}
-	.information {
+	.info-section {
 		padding: 10px 10px;
   	font-family: $font-content;
   	font-weight: 200;
   	word-wrap: break-word;
   	color: $dark-grey;
+  	background-color: $lighter-grey;
+  	&.opinions {
+  		padding: 50px 10px;
+  		background-color: white;
+  	}
+  	&.related {
+  		padding: 50px 10px;
+  		background-color: $pale-blue;
+  	}
   	h1 {
   		font-family: $font-headers;
   		margin: 0px;
@@ -55,15 +64,23 @@
   		font-weight: bold;
   	}
   	.quote {
-  		margin: 0px;
+  		margin: 0px 0px 24px 0px;
   		font-family: $font-content;
   		font-style: italic;
   		font-size: 14pt;
   	}
-  	hr {
-  		border: 0;
-  		height: 1px;
-  		border-color: $light-grey;
+  	.opinionNode {
+  		h2 {
+  			margin: 50px 0px 0px 0px;
+  			font-size: 14pt;
+  			font-weight: bold;
+  			.fa {
+  				color: $blue;
+  				margin-left: 10px;
+  			}
+  		}
+  		border: solid $lighty-grey;
+  		border-width: 0px 0px 2px 0px;
   	}
 	}
 }

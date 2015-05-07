@@ -3,6 +3,7 @@ var posts = require('../collections').get('posts')
 var Data = require('../data')
 var ImageComponent = require('ainojs-react-image')
 var CreatorName = require('./creatorname')
+var Opinion = require('./opinion')
 
 module.exports = React.createClass({
 
@@ -73,7 +74,7 @@ module.exports = React.createClass({
     		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
         	<ImageComponent src={ postMock.coverArt.url } lazy={true} ratio={ postMock.coverArt.height / postMock.coverArt.width} />
         </div>
-    		<div className="information">
+    		<div className="info-section">
     			<h1>{ postMock.title }</h1>
     			<h2><CreatorName creator={ postMock.creator } /></h2>
           <p className="providerDate">2092</p>
@@ -81,12 +82,19 @@ module.exports = React.createClass({
           <p className="quote">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
           </p>
-    			<a className="btn keyword">
+    			<button className="taste">
             Kolla ett smakprov!
-          </a>
-    			<hr />
-    			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          </button>
+        </div>
+        <div className="info-section opinions">
+    			<h1>Vad tycker andra?</h1>
+          <Opinion />
+          <Opinion />
     		</div>
+        <div className="info-section related">
+          <h1>Relaterade titlar</h1>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
     	</div>
     	)
   }
