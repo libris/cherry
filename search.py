@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 
-def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, sort=None, t=None, n=None, f=None, page=None):
+def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, sort=None, t=None, n=None, f=None, page=None, index_name='cherry'):
     """Will search annotations if no other doctype is given."""
     if not doctype:
         doctype=['annotation', 'excerpt']
@@ -84,7 +84,7 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
     #app.logger.debug("about to search")
     #print("doc_type:",doctype)
     #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type=doctype)
+    r = es.search(body=query, index=index_name, doc_type=doctype)
     #app.logger.debug("did search {0} ({1} according to es)".format(time.time() - t0, r['took']))
     #print(r)
     return r
