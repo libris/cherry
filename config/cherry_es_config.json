@@ -6,6 +6,7 @@
                     "filter": [
                         "standard",
                         "lowercase",
+                        "stopword_filter",
                         "autocomplete_filter"
                     ],
                     "tokenizer": "standard",
@@ -22,8 +23,9 @@
                 },
                 "shingle_analyzer": {
                     "type":             "custom",
-                    "tokenizer":        "standard",
+                    "tokenizer":        "whitespace",
                     "filter": [
+                        "letter",
                         "lowercase",
                         "stopword_filter",
                         "shingle_filter"
@@ -31,8 +33,9 @@
                 },
                 "unigram_analyzer": {
                     "type":             "custom",
-                    "tokenizer":        "standard",
+                    "tokenizer":        "whitespace",
                     "filter": [
+                        "letter",
                         "lowercase",
                         "stopword_filter"
                     ]
@@ -271,6 +274,12 @@
                     "include_in_all": false,
                     "store": true,
                     "type": "string"
+                },
+                "created": {
+                    "include_in_all": false,
+                    "index": "not_analyzed",
+                    "store": true,
+                    "type": "date"
                 },
                 "parentCandidate": {
                     "type": "object",

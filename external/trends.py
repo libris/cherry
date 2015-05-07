@@ -45,3 +45,7 @@ def all_trends(*args):
 
     return topics
 
+
+
+
+

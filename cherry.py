@@ -23,6 +23,7 @@ import operator
 from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
+from search import *
 from nltk.metrics import edit_distance
 
 pp = pprint.PrettyPrinter(indent=1)
@@ -257,7 +258,7 @@ def assemble_flt_records(query, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = excluded_ids
-    result = do_flt_query(50, query)
+    result = do_flt_query(es, size=50, q=query)
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
@@ -282,9 +283,9 @@ def assemble_flt_records(query, excluded_ids=[]):
 @app.route('/api/flt')
 def api_flt():
     size = request.args.get('size',75)
-    return json_response(do_flt_query(size, request.args.get('q'), request.args.get('doctype')))
+    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype')))
 
-def do_flt_query(size=75, qstr=None, doctype=None):
+def old_do_flt_query(size=75, qstr=None, doctype=None):
     """Will search annotations if no other doctype is given."""
     q = qstr if qstr else request.args.get('q')
     i = request.args.get('i')
@@ -650,19 +651,17 @@ def api_children():
     #r = es.search(body=query, index='cherry')
     return json.dumps(r)
 
-# TODO: Find better caching
-app.trends = {}
-
 @app.route('/api/trending')
 def api_trending():
-    if not app.trends:
-        app.trends = all_trends(twitter, google)
+    t0 = time.time()
+    try:
+        with open('trending_topics.txt', 'r') as f:
+            topics = eval(f.read())
+    except:
+        print("No trend file found. Loading (unchecked) from scratch.")
+        topics = all_trends(google, twitter)
 
-    return json_response({"items": app.trends})
-
-        
-        
-
+    return json_response({"items": topics, "duration": "PT{0}S".format(time.time() - t0)})
 
 
 @app.route('/api/json')
