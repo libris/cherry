@@ -75,7 +75,7 @@ def api_search():
     if q:
         qq['filtered']['query']['bool']['should'].append({ 
             "has_child": {
-                        "type": ["annotation"],
+                        "type": ["excerpt"],
                         "query": {
 
                             "query_string" : {
@@ -118,10 +118,8 @@ def api_search():
             "child_content": {
                 "children": {"type": "annotation"},
         "aggs" : {
-            "unigrams_gnd" : {"significant_terms" : {"field" : "text", "size": 50, "gnd": {}}},
-            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 50}},
-            "bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 50, "gnd": {}}},
-            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 50}},
+            "unigrams" : {"significant_terms" : {"field" : "text", "size": 50, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 50, "gnd": {}}},
 
 
         }}},
@@ -177,25 +175,6 @@ def api_search():
         err['exception'] = r.text
         return json.dumps(err)
 
-    if q and rtext.get('hits', {}).get('hits', None):
-        for ch, hit in enumerate(rtext['hits']['hits']):
-            for cs, s in enumerate(hit['highlight']['text']):
-                a = re.sub('<[^>]*>', '', s)
-                print(a)
-                #rtext['hits']['hits'][ch]['highlight']['summary'][cs] = a
-
-        try:
-            for ch, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
-                try:
-                    for cs, s in enumerate(hit.get('highlight', {}).get('text', [])):
-                        a = re.sub('<[^>]*>', '', s)
-                        print(a)
-                        rtext['hits']['hits'][ch]['highlight']['text'][cs] = a
-                except Exception as e:
-                    app.logger.error("Highlights enumerate fail: {0}".format(e))
-                    continue
-        except Exception as e:
-            app.logger.error("Hits enumeration failed: {0}".format(e))
 
     #rtext["hits_total"] = rtext["hits"]["total"]
     #return jsonify(rtext)
@@ -419,15 +398,6 @@ def api_suggest():
     q = request.args.get('q')
     precision = 'y'
 
-    qq = {
-        "query_string" : {
-            "default_field" : "text",
-            "default_operator" : "AND",
-            "query" : q,
-
-        }
-    } if q and q != '*' else {}
-
     query = {
         "sort" : [],
         "size" : 75,
@@ -438,13 +408,13 @@ def api_suggest():
             "text" : q,
             "simple_phrase" : {
                 "phrase" : {
-                    "field" : "text",#suggest multiple fields? _all?
+                    "field" : "author_title",
                     "size" : 2,
                     "real_word_error_likelihood" : 0.95,
                     "max_errors" : 3,
                     "gram_size" : 2,
                     "direct_generator" : [ {
-                        "field" : "text",
+                        "field" : "author_title",
                         "suggest_mode" : "popular",
                         "min_word_length" : 1
                     } ],
@@ -457,11 +427,8 @@ def api_suggest():
 
 
     t0 = time.time()
-    app.logger.debug("about to search")
-    #HERE is the elastic search call
-    r = es.search(body=query, index='cherry', doc_type='annotation')
+    r = es.search(body=query, index='cherry', doc_type='record')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    #return r.text
 
     rtext = r
     if rtext.get('status', 0):
@@ -475,6 +442,89 @@ def api_suggest():
 
     return json.dumps(rtext)
 
+
+@app.route('/api/complete')
+def api_complete():
+    """Complete takes >= 3 chars, and returns a json list containing completed parts of phrase plus suggestions and the number of hits for each suggestion, sorted by frequency."""
+    q = request.args.get('q')
+    if len(q) < 3:
+        return json.dumps({"suggestions": [[q, 1]]})
+
+    qs = q.split()
+    q_tail = qs[-1]
+    if len(q_tail) < 3:
+        return json.dumps({"suggestions": [[q, 1]]})
+    q_head = ' '.join(qs[:-1]).lower()
+    print( "q_head", q_head)
+
+
+    
+    n = 500
+    qq = {
+        "match" : {
+            "_all": q_tail
+        }
+        } if q and q_tail != '*' else { "match_all": {} }
+    query = {
+            "_source" : [ "highlight"],
+            "query" : qq,
+            "size": n,
+
+
+            "highlight" : {
+                "fields" : {
+                    "author_title" : { "fragment_size": "50", "number_of_fragments" : 5,  "term_vector":"with_positions_offsets" }
+                    }
+                }}
+
+
+    highlights = []
+    try:
+        r = es.search(index=suggestIndex, body=query)
+        rtext = r
+        if rtext.get('status', 0):
+            err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
+            err['exception'] = r.text
+
+        if rtext.get('hits', {}).get('hits', None):
+            try:
+                for i, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
+                    try:
+                        for j, c in enumerate(hit.get('highlight', {}).get('suggest', [])):
+                            #[ highlights.append("{0} {1}".format(q_head,s.lower())) for s in re.findall('<em>(.*?)</em>', c) ]
+                            [ highlights.append(q_head+' '+s.lower()) for s in re.findall('<em>(.*?)</em>', c) ]
+                    except Exception as e:
+                        app.logger.error("Enumerate fail: {0}".format(e))
+                        continue
+            except Exception as e:
+                app.logger.error("Hits enumeration failed: {0}".format(e))
+    except Exception as e:
+        app.logger.error("Search failed: {0}".format(e))
+
+    hl_counter=collections.Counter(highlights)
+    hl_sorted = sorted(
+        hl_counter.iteritems(),
+        key=operator.itemgetter(1),
+        reverse=True
+    )[:10]
+    return json.dumps({"suggestions": hl_sorted})
+    return json.dumps({"suggestions": list(set(highlights))})
+
+@app.route('/api/blogtrends')
+def api_blogtrends():
+    query = {
+        "fields": "aggregations",
+        "query": {"match_all": {}},
+        "aggs" : {
+            "bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 30, "gnd": {}}},
+    }
+    }
+
+    r = es.search(body=query, index='cherry', doc_type='annotation')
+    return json.dumps(r)
+
+    u = get_related_words_from_query_result(r, '')
+    return json.dumps({"items": u})
 
 @app.route('/api/related')
 def api_related():
