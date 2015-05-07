@@ -475,28 +475,22 @@ def api_suggest():
 
     return json.dumps(rtext)
 
-def cleanup(s):
-    noise_words_set = ["och", "är", "har", "en", "av", "för", "att", "med", "ger", "i"]
-    print(s)
-    stuff = ' '.join(w for w in s.split() if w not in noise_words_set)
-    return stuff
 
 @app.route('/api/related')
 def api_related():
     return json_response(do_related_query(request.args.get('q')))
 
-def get_related_words_from_query_result(rtext, q):#missar vi nåt om vi även tar bort alla sammansättningar? kaffe -> kaffekopp är inte nödvändigtvis kass, eller?
+def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
     rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]
         for i in rel_terms:
-            if not i["key"].isdigit() and i["key"] not in q.split() and q not in i["key"]:
-                w = cleanup(i["key"])
+            if not i["key"].isdigit() and edit_distance(i["key"], q) > 3:
                 ok = True
                 for u in unique:
-                    if w in u:
+                    if edit_distance(w, u) < 4:
                         print("{0} not ok because {1}".format(w, u))
                         ok = False
                 if ok:
