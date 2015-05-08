@@ -16,8 +16,11 @@ module.exports = React.createClass({
     var trends = collections.get('trending').map(function(model, i) {
       var topic = model.get('topic')
       var href = '/trends/?' + Query.stringify({ q: topic })
-      return <li><a href={href} key={i+topic}>{topic}</a></li>
-    })
+      var classNames = []
+      if ( this.props.section == 'trends' && topic == this.props.query.q )
+      	classNames.push('active')
+      return <li className={classNames.join(' ')}><a href={href} key={i+topic}>{topic}</a></li>
+    }, this)
 
     return (
         <div className="menu">
