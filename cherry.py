@@ -20,7 +20,7 @@ from traceback import print_last
 import pprint
 import collections
 import operator
-from whelk import Storage, Record
+#from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 from search import *
@@ -40,7 +40,7 @@ app.permanent_session_lifetime = timedelta(days=31)
 #app.config.from_object(__name__)
 
 es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, sniffer_timeout=300, timeout=30)
-storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
                   access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
                   consumer_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -54,6 +54,11 @@ def json_response(data):
 
 @app.route('/api/search')
 def api_search():
+    """Search by q (excerpt), title or creator. 
+    Searching record and excerpt.
+    Returns hitlist, aggregation: family name ...
+    Used for: 
+    """
     print("search")
     q = request.args.get('q')#fritext
     t = request.args.get('t')#titel
@@ -151,13 +156,6 @@ def api_search():
         print("page")
         query['from'] = n * int(request.args.get('page'))
 
-#    if sort:
-#        if sort == 'd':
-#            query['sort'] = [{ "description" : "asc" }]
-#
-#        if sort == 's':
-#            query['sort'] = [{ "summary" : "asc" }]
-#
 
 
     if request.args.get('f'):
@@ -334,25 +332,28 @@ def api_complete():
     n = 500
     qq = {
         "match" : {
-            "author_title.bigrams": q
+            "author_title.shingles": q
         }
         } if q and q != '*' else { "match_all": {} }
     query = {
-            "_source" : [ "highlight"],
+            #"_source" : [ "highlight"],
             "query" : qq,
             "size": n,
 
 
             "highlight" : {
                 "fields" : {
-                    "author_title.bigrams" : { "fragment_size": "50", "number_of_fragments" : 5,  "term_vector":"with_positions_offsets" }
+                    "author_title.shingles" : { "fragment_size": "50", "number_of_fragments" : 5,  "term_vector":"with_positions_offsets" }
                     }
                 }}
 
 
+    r = es.search(index=app.config['CHERRY'], body=query, doc_type='record')
+    return json.dumps(r)
     highlights = []
     try:
         r = es.search(index=suggestIndex, body=query)
+        return json.dumps(r)
         rtext = r
         if rtext.get('status', 0):
             err = {"err": 1, "msg": "Sökningen misslyckades", "hits": {"total": 0}}
@@ -362,7 +363,7 @@ def api_complete():
             try:
                 for i, hit in enumerate(rtext.get('hits', {}).get('hits', [])):
                     try:
-                        for j, c in enumerate(hit.get('highlight', {}).get('suggest', [])):
+                        for j, c in enumerate(hit.get('highlight', {}).get('author_title.shingles', [])):
                             #[ highlights.append("{0} {1}".format(q_head,s.lower())) for s in re.findall('<em>(.*?)</em>', c) ]
                             [ highlights.append(q_head+' '+s.lower()) for s in re.findall('<em>(.*?)</em>', c) ]
                     except Exception as e:
@@ -385,7 +386,7 @@ def api_complete():
 @app.route('/api/blogtrends')
 def api_blogtrends():
     """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt. Lägg till begränsning tidsintervall när fältet är indexerat."""
-    q = request.args.get('q')
+    q = request.args.get('q') if request.args.get('q') else ''
     query = {
         #"fields": "aggregations",
    #     "query": {
@@ -402,7 +403,7 @@ def api_blogtrends():
                 "filter" : {
                     "range" : {
                         "created" : {
-                            "gte": "now-2M",
+                            "gte": "now-7d",
                             "lte": "now"
                         }
                     }
@@ -418,6 +419,7 @@ def api_blogtrends():
     #return json.dumps(r)
 
     u = get_related_words_from_query_result(r, q)
+    u = [w for w in u if len(w.split(" ")) > 1]
     return json.dumps({"items": u})
 
 @app.route('/api/related')
@@ -426,24 +428,20 @@ def api_related():
 
 def prefix_diff(l):
     bigrams = [s for s in l if len(s.split(" ")) > 1] #any of the strings is a bigram
-    #print("bigrams: ", bigrams)
     if bigrams:
         common = [a for a in l[0].split(" ") if a in l[1].split(" ")]
         if common:
-            print("common", common)
             return 0
         else:
             return 4
 
 
     l.sort(key=len)
-    thelength = len(l[-1][len(commonprefix(l)):])
-    print("thelength", thelength)
     return len(l[-1][len(commonprefix(l)):])
 
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
-    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [i["key"] for i in rel_terms if not i["key"].isdigit() and prefix_diff([i["key"], q]) > 3]
@@ -567,9 +565,9 @@ def api_children():
 def api_trending():
     t0 = time.time()
     try:
-        with open('trending_topics.txt', 'r') as f:
+        with open('trending_topics.txt', encoding='utf-8') as f:
             topics = eval(f.read())
-    except:
+    except Exception as e:
         print("No trend file found. Loading (unchecked) from scratch.")
         topics = all_trends(google, twitter)
 
@@ -601,18 +599,15 @@ def load_record_with_all_children(recordpath):
         print("Resource {0} not found.".format(recordpath))
         abort(404)
 
-#@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
 def load_image(xinfopath):
-    record = storage.load("/xinfo/{0}".format(xinfopath), store='xinfo')
-    if record:
-        if record.entry['contentType'] in ['image/jpeg','image/jpg','image/png','image/gif']:
-            return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])
-        elif record.entry['contentType'] in ['application/json','application/ld+json']:
-            datatext = bytes(record.data).decode('utf-8')
-            return json.loads(datatext)
-    else:
+    filename = "{0}.jpg".format(xinfo_cover.split("/")[0].split(":")[1])
+    try:
+        with open(join("../xinfo_cover/", filename), "rb") as imgfile:
+            return send_file(io.BytesIO(imgfile.read()), attachment_filename=filename, mimetype="image/jpeg")
+    except Exception as e:
         print("Resource /xinfo/{0} was not found.".format(xinfopath))
+        print("Exception:", e)
         abort(404)
 
 @app.route('/', defaults={'path': ''})
