@@ -153,16 +153,16 @@ module.exports = React.createClass({
     var content = null
     var hits = collections.get('hits')
     if ( this.state.loading )
-      content = <p>Laddar ämnen...</p>
+      content = <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
     else
-      content = this.renderItems() || <div>Loading...</div>
+      content = this.renderItems() || <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
     
     var growtext = this.state.growing ? 'Planting more seeds...' : 'Click to plant'
     var grow = collections.get('hits').length ? <button className="growspin" onClick={this.grow}>{growtext}</button> : null
 
     return (
       <div>
-        <Menu />
+        <Menu section={this.state.section} query={this.getQuery()} />
         <div ref="container">{content}</div>
         { grow }
       </div>

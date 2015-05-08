@@ -23,7 +23,7 @@ def child_texts(es, index_name, p):
 def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, sort=None, t=None, n=None, f=None, page=None, index_name='cherry'):
     """Will search annotations if no other doctype is given."""
     if not doctype:
-        doctype=['annotation', 'excerpt']
+        doctype=['annotation']
     n = 50
     date_filter = []
     precision = 'y'
@@ -46,11 +46,12 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
             "prefix_length": 4
         }},
 
-        "fields": ["_parent"],
+        "fields": ["_parent","_source"],
 
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-
+            #"unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
+            #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
         }
     }
     if t:
