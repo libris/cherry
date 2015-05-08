@@ -20,7 +20,7 @@ from traceback import print_last
 import pprint
 import collections
 import operator
-from whelk import Storage, Record
+#from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 from search import *
@@ -40,7 +40,7 @@ app.permanent_session_lifetime = timedelta(days=31)
 #app.config.from_object(__name__)
 
 es = Elasticsearch(app.config['ELASTIC_HOST'], sniff_on_start=True, sniff_on_connection_fail=True, sniff_timeout=60, sniffer_timeout=300, timeout=30)
-storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
+#storage = Storage(host=app.config['DATABASE_HOST'], database=app.config['DATABASE_NAME'], user=app.config['DATABASE_USER'], password=app.config['DATABASE_PASSWORD'])
 twitter = Twitter(access_token=app.config['TWITTER_ACCESS_TOKEN'],
                   access_token_secret=app.config['TWITTER_ACCESS_TOKEN_SECRET'],
                   consumer_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -443,7 +443,7 @@ def prefix_diff(l):
 
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
-    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [i["key"] for i in rel_terms if not i["key"].isdigit() and prefix_diff([i["key"], q]) > 3]
@@ -567,9 +567,9 @@ def api_children():
 def api_trending():
     t0 = time.time()
     try:
-        with open('trending_topics.txt', 'r') as f:
+        with open('trending_topics.txt', encoding='utf-8') as f:
             topics = eval(f.read())
-    except:
+    except Exception as e:
         print("No trend file found. Loading (unchecked) from scratch.")
         topics = all_trends(google, twitter)
 
@@ -601,18 +601,15 @@ def load_record_with_all_children(recordpath):
         print("Resource {0} not found.".format(recordpath))
         abort(404)
 
-#@app.route('/xinfo/', defaults={'path': ''})
 @app.route('/xinfo/<path:xinfopath>')
 def load_image(xinfopath):
-    record = storage.load("/xinfo/{0}".format(xinfopath), store='xinfo')
-    if record:
-        if record.entry['contentType'] in ['image/jpeg','image/jpg','image/png','image/gif']:
-            return send_file(io.BytesIO(record.data), attachment_filename='image.jpg', mimetype=record.entry['contentType'])
-        elif record.entry['contentType'] in ['application/json','application/ld+json']:
-            datatext = bytes(record.data).decode('utf-8')
-            return json.loads(datatext)
-    else:
+    filename = "{0}.jpg".format(xinfo_cover.split("/")[0].split(":")[1])
+    try:
+        with open(join("../xinfo_cover/", filename), "rb") as imgfile:
+            return send_file(io.BytesIO(imgfile.read()), attachment_filename=filename, mimetype="image/jpeg")
+    except Exception as e:
         print("Resource /xinfo/{0} was not found.".format(xinfopath))
+        print("Exception:", e)
         abort(404)
 
 @app.route('/', defaults={'path': ''})

@@ -60,8 +60,8 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
         #min doc count might decrease risk of choosing misspellings, though throwing away rare occurrences of relevant synonyms - find a good threshold
         # don't calculate aggs for flt. that is handled by related.
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-            #"bigrams" : {"significant_terms" : {"field" : "text.shingles", "size": 10, "gnd": {}}},
+            #"unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
             #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
 
 
