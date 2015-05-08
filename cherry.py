@@ -603,7 +603,7 @@ def load_record_with_all_children(recordpath):
 def load_image(xinfopath):
     filename = "{0}.jpg".format(xinfopath.split("/")[0].split(":")[1])
     try:
-        with open(join("xinfo_images/", filename), "rb") as imgfile:
+        with open(join(app.config['XINFO_PATH'], filename), "rb") as imgfile:
             return send_file(io.BytesIO(imgfile.read()), attachment_filename=filename, mimetype="image/jpeg")
     except Exception as e:
         print("failed to load file {0}: {1}".format(filename, e))
