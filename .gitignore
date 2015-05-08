@@ -8,3 +8,4 @@ node_modules/
 static/*
 log/*
 hashes.json
+trending_topics.txt

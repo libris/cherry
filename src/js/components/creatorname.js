@@ -8,7 +8,7 @@ module.exports = React.createClass({
     var composeName = function (obj) {
       if(obj['@type'] == 'Person'){
         if (!obj.givenName && !obj.familyName)
-          return ""
+          return ''
 
         return [obj.givenName, obj.familyName].join(' ');
       } else if(obj['@type'] == 'Organization'){
@@ -30,7 +30,7 @@ module.exports = React.createClass({
     }
 
     return (
-        <div>
+        <div className="creatorName">
             { creatorList.join(', ') }
         </div>
     )

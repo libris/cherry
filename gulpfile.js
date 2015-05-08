@@ -98,7 +98,7 @@ var gulpBrowserify = function(options) {
       b.external(lib)
     })
   }
-  b.transform(babelify) // Instead of reactify, Babel has built-in support for React
+  b.transform(reactify) // Instead of reactify, Babel has built-in support for React
   return b.bundle().on('error', function(e) {
     error.raise(e)
   })

@@ -38,28 +38,30 @@ module.exports = React.createClass({
 
   render: function() {
   	
-  	// if ( this.state.loading ) {
-   //    return <p>loading</p>
-  	// }
+  	if ( this.state.loading ) {
+      return <p>loading</p>
+  	}
   	var post = posts.getModel({
-  		'@id': this.props.route.params[0]
+  		'identifier': this.props.route.params[0]
   	})
-    console.log(this.props.route.params)
-  	console.log('title', post.get('title'))
-  	
 
     var postMock = {
       title : 'Testpost',
       creator : {
-        givenName : 'Sven',
-        familyName : 'Svensson'
+        givenName : 'Test',
+        familyName : 'Testsson'
       },
       coverArt : {
         url : "http://galleria.io/static/i/s2013/2m.jpg",
         width : 220,
         height : 160
+      },
+      publication : {
+        providerDate : 2054
       }
     }
+    var coverArt = post.get('coverArt')[0]
+    var annotation = post.get('annotation')[0];
 
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
@@ -67,15 +69,17 @@ module.exports = React.createClass({
     return (
     	<div className="detailView">
     		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
-        	<ImageComponent src={ postMock.coverArt.url } lazy={true} ratio={ postMock.coverArt.height / postMock.coverArt.width} />
+        	<ImageComponent src={ coverArt.coverArt } lazy={true} ratio={ coverArt.height / coverArt.width} />
         </div>
     		<div className="info-section">
-    			<h1>{ postMock.title }</h1>
-    			<h2><CreatorName creator={ postMock.creator } /></h2>
-          <p className="providerDate">2092</p>
+    			<h1>{ post.get('title') }</h1>
+    			<h2>
+            <CreatorName creator={ post.get('creator') } />
+          </h2>
+          <p className="providerDate">{ post.get('publication')[0].providerDate }</p>
           <i className="fa fa-2x fa-quote-right"></i>
           <p className="quote">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            {annotation.text}
           </p>
     			<button className="taste">
             Kolla ett smakprov!
