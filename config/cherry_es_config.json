@@ -67,14 +67,15 @@
                     "type":             "shingle",
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
-                    "output_unigrams":  false
+                    "output_unigrams":  true,
+                    "filler_token": ""
                 },
                 "bigram_filter": {
                     "type":             "shingle",
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
                     "output_unigrams":  false,
-                    "filler_token": ''
+                    "filler_token": ""
                 },
                 "stopword_filter": {
                     "type": "stop",

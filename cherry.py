@@ -269,6 +269,7 @@ def assemble_flt_records(query, excluded_ids=[]):
             parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
             hitlist_record = {
                               '@id': parent_record['@id'],
+                              'identifier': ident,
                               'title': parent_record['title'],
                               'creator': parent_record['creator']
                              }
@@ -594,12 +595,17 @@ def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
 
+@app.route('/api/bok')
+def load_record_by_query():
+    return load_record_with_all_children(request.args.get('q'))
+
 @app.route('/bok/<path:recordpath>')
 def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)
     ident = recordpath.replace("/", "")
     record = es.get_source(index=app.config['CHERRY'], doc_type='record', id=ident)
     if record:
+        record['identifier'] = ident
         record['annotation'] = find_children('annotation', ident)
         record['excerpt'] = find_children('excerpt', ident)
         record['coverArt'] = find_children('cover', ident)
