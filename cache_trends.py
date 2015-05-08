@@ -10,7 +10,7 @@ CONFIG_FILE = 'config.cfg'
 def verify_trends(trends, es, index):
     hot_trends = []
     for trend in trends:
-        results = do_flt_query(es, size=1, q=trend['topic'], index=index)
+        results = do_flt_query(es, size=1, q=trend['topic'], index_name=index)
         if results["hits"]["total"] > 0:
             hot_trends.append(trend)
 
