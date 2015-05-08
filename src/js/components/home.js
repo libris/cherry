@@ -28,7 +28,8 @@ module.exports = React.createClass({
   getInitialState: function() {
     return {
       loading: true,
-      section: 'home'
+      section: 'home',
+      q: ''
     }
   },
   plant: function(topic) {
@@ -53,33 +54,35 @@ module.exports = React.createClass({
     var next = this.getQuery(nextProps.route)
     var old  = this.getQuery()
     var hits = collections.get('hits')
-    if ( this.state.section !== nextProps.route.name )
-      this.setState({
-        section: nextProps.route.name
-      })
-    if ( (old.q || next.q) && next.q !== old.q ) {
-      hits.reset()
-    }
-    if ( next.q !== old.q || next.more !== old.more )
-      this.loadSequence(next)
-  },
-  // tries an array of seeds
-  sow: function(topics) {
-    return new Promise(function(resolve, reject) {
-      var plant = function(topic) {
-        this.plant(topic).then(resolve).catch(function(e) {
-          topics.shift()
-          hits.remove(hits.at(hits.length-1))
-          topics.length ? plant(topics[0]) : reject('No more topics :(')
+    this.setState({
+      q: next.q
+    }, function() {
+      if ( this.state.section !== nextProps.route.name )
+        this.setState({
+          section: nextProps.route.name
         })
-      }.bind(this)
-      plant(topics[0])
-    }.bind(this))
+      if ( (old.q || next.q) && next.q !== old.q ) {
+        hits.reset()
+      }
+      if ( next.q !== old.q || next.more !== old.more )
+        this.loadSequence(next)
+    })
+  },
+  onScroll: function(e) {
+    if ( collections.get('hits').length && (window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+      this.grow()
+    }
+  },
+  componentDidMount: function() {
+    window.addEventListener('scroll', this.onScroll)
+  },
+  componentWillUnmount: function() {
+    window.removeEventListener('scroll', this.onScroll)
   },
   loadSequence: function(query) {
     query = query || this.getQuery()
     console.info('Loading sequence', query)
-    var topic = query.q
+    var topic = this.state.q
     var more = Math.min((parseInt(query.more, 10) || 0), 10)
     var i = 0
     if ( !topic ) {
@@ -87,7 +90,7 @@ module.exports = React.createClass({
       return
     }
     var hits = collections.get('hits')
-    var saw = function() {
+    var sow = function() {
       if ( hits.at(i) ) // If we already have a model in the same sequence order, skip loading
         return next()
       console.info('Planting topic: '+topic)
@@ -95,14 +98,18 @@ module.exports = React.createClass({
         console.warn('No more seeds available')
       })
     }.bind(this)
-    saw()
+    this.setState({ growing: true })
+    sow()
+    var self = this
     function next() {
       if ( i<more ) {
         var hit = hits.at(hits.length-1)
         console.log('QUERY', hit.get('query'))
         topic = hit.get('query').relatedWords.splice(0,3).join(' ')
         i++
-        saw()
+        sow()
+      } else {
+        self.setState({ growing: false })
       }
     }
   },
@@ -114,17 +121,20 @@ module.exports = React.createClass({
       if ( q )
         this.loadSequence()
       else {
-        var topics = collections.get('trending').map(function(model) {
+        var topic = collections.get('trending').map(function(model) {
           return model.get('topic')
+        })[0]
+        this.setState({
+          q: topic
         })
-        this.sow( chopArray(topics, 1) ).then(function(topic) {
-          console.log('sawed topic', topic)
-        }.bind(this))
+        this.plant( topic )
       }
     })
   },
   grow: function(e) {
-    e.preventDefault()
+    if ( this.state.growing || !this.state.q )
+      return
+    e && e.preventDefault()
     var query = this.getQuery()
     query.more = ( parseInt(query.more) || 0 ) + 1
     Router.navigate('/'+this.state.section+'/?' + Query.stringify(query), true)
@@ -146,11 +156,15 @@ module.exports = React.createClass({
       content = <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
     else
       content = this.renderItems() || <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
+    
+    var growtext = this.state.growing ? 'Planting more seeds...' : 'Click to plant'
+    var grow = collections.get('hits').length ? <button className="growspin" onClick={this.grow}>{growtext}</button> : null
+
     return (
       <div>
         <Menu section={this.state.section} query={this.getQuery()} />
         <div ref="container">{content}</div>
-        <button onClick={this.grow}>Visa fler</button>
+        { grow }
       </div>
     )
   }
