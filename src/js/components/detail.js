@@ -66,6 +66,11 @@ module.exports = React.createClass({
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
 
+    var opinions = post.get('annotation').map(function (item, i) {
+      if (item['@type'] === 'Summary')
+        return <Opinion data={item} />
+    })
+
     return (
     	<div className="detailView">
     		<div className={coverClasses.join(' ')} onClick={this.toggleFold}>
@@ -87,8 +92,7 @@ module.exports = React.createClass({
         </div>
         <div className="info-section opinionList">
     			<h1>Vad tycker andra?</h1>
-          <Opinion />
-          <Opinion />
+          {opinions}
     		</div>
         <div className="info-section related">
           <h1>Relaterade titlar</h1>
