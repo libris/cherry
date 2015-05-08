@@ -43,9 +43,12 @@ def main(**args):
 
     for (identifier, image) in images:
         isbn = identifier.split(":")[1]
-        image.save("{directory}/{identifier}.jpg".format(directory=args['dir'], identifier=isbn))
-        print("Saved image {0}/{1}.jpg".format(args['dir'], isbn))
-        counter += 1
+        try:
+            image.save("{directory}/{identifier}.jpg".format(directory=args['dir'], identifier=isbn))
+            print("Saved image {0}/{1}.jpg".format(args['dir'], isbn))
+            counter += 1
+        except Exception as e:
+            print("Failed to save {0}/{1}.jpg : {2}".format(args['dir'], isbn, e))
 
         #if counter > 3:
         #    print("That's enough for now.")
