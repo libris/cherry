@@ -399,7 +399,7 @@ def api_complete():
 @app.route('/api/blogtrends')
 def api_blogtrends():
     """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt. Lägg till begränsning tidsintervall när fältet är indexerat."""
-    q = request.args.get('q')
+    q = request.args.get('q') if request.args.get('q') else ''
     query = {
         #"fields": "aggregations",
    #     "query": {
@@ -416,7 +416,7 @@ def api_blogtrends():
                 "filter" : {
                     "range" : {
                         "created" : {
-                            "gte": "now-2M",
+                            "gte": "now-3M",
                             "lte": "now"
                         }
                     }
@@ -432,6 +432,7 @@ def api_blogtrends():
     #return json.dumps(r)
 
     u = get_related_words_from_query_result(r, q)
+    u = [w for w in u if len(w.split(" ")) > 1]
     return json.dumps({"items": u})
 
 @app.route('/api/related')
@@ -440,19 +441,15 @@ def api_related():
 
 def prefix_diff(l):
     bigrams = [s for s in l if len(s.split(" ")) > 1] #any of the strings is a bigram
-    #print("bigrams: ", bigrams)
     if bigrams:
         common = [a for a in l[0].split(" ") if a in l[1].split(" ")]
         if common:
-            print("common", common)
             return 0
         else:
             return 4
 
 
     l.sort(key=len)
-    thelength = len(l[-1][len(commonprefix(l)):])
-    print("thelength", thelength)
     return len(l[-1][len(commonprefix(l)):])
 
 def get_related_words_from_query_result(rtext, q):
