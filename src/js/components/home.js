@@ -8,6 +8,7 @@ var Tick = require('next-tick')
 var _ = require('underscore')
 var Promise = require('promise')
 var Query = require('query-string')
+var Menu = require('./menu')
 
 var chopArray = function(array, range) {
   range = range || 3
@@ -98,6 +99,7 @@ module.exports = React.createClass({
     function next() {
       if ( i<more ) {
         var hit = hits.at(hits.length-1)
+        console.log('QUERY', hit.get('query'))
         topic = hit.get('query').relatedWords.splice(0,3).join(' ')
         i++
         saw()
@@ -141,28 +143,14 @@ module.exports = React.createClass({
     var content = null
     var hits = collections.get('hits')
     if ( this.state.loading )
-      content = <p>Loading trending topics_</p>
+      content = <p>Laddar ämnen...</p>
     else
       content = this.renderItems() || <div>Loading...</div>
-    var trends = collections.get('trending').map(function(model, i) {
-      var topic = model.get('topic')
-      var href = '/trends/?' + Query.stringify({ q: topic })
-      return <a href={href} key={i+topic}>{topic}</a>
-    })
     return (
       <div>
-        <header>
-          <nav className="categories">
-            <a className="top" href="">Topplistor</a>
-            <a className="winners" href="">Prisvinnare</a>
-            <a className="trends" href="">Trender</a>
-          </nav>
-          <nav className="trendbar">
-            {trends}
-          </nav>
-        </header>
+        <Menu />
         <div ref="container">{content}</div>
-        <button onClick={this.grow}>Plant some more</button>
+        <button onClick={this.grow}>Visa fler</button>
       </div>
     )
   }

@@ -3,6 +3,7 @@
 
 import argparse
 import requests
+from dateutil.parser import parse
 import lxml.html
 from lxml.html.clean import Cleaner
 import base64
@@ -26,7 +27,7 @@ blogs = {
 }
 
 
-def consume(url, server):
+def consume(url, server, index_name):
     print("Consuming blog from ", url)
     es = Elasticsearch(server, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
     page = 0
@@ -39,7 +40,7 @@ def consume(url, server):
             next_page = url.format(page=page)
         if page > 1 and next_page == url:
             print("Failure casued looping. Saving documents and breaking.")
-            bulkdata = [ { '_index': 'cherry', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            bulkdata = [ { '_index': index_name, '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             bulk(es, bulkdata)
             break
 
@@ -65,7 +66,7 @@ def consume(url, server):
 
         if len(entries) == 0:
             print("All posts consumed. Saving ...")
-            bulkdata = [ { '_index': 'cherry', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            bulkdata = [ { '_index': index_name, '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             r = bulk(es, bulkdata)
             print("save result", r)
             break
@@ -74,6 +75,8 @@ def consume(url, server):
         for entry in entries:
             try:
                 entry_title = lxml.html.document_fromstring(entry.findtext("{0}title".format(ATOM))).text_content()
+                pub_element = lxml.html.document_fromstring(entry.findtext("{0}published".format(ATOM))).text_content()
+                published = parse(pub_element)
                 back_link_elements = entry.findall("{0}link[@rel='alternate']".format(ATOM))
                 entry_id = back_link_elements[0].get("href") if len(next_link_elements) > 0 else entry.findtext("{0}id".format(ATOM))
                 content = entry.find("{0}content".format(ATOM)).text
@@ -86,6 +89,7 @@ def consume(url, server):
                 jsonld['name'] = entry_title
                 jsonld['url'] = entry_id
                 jsonld['text'] = entry_content
+                jsonld['created'] = published.strftime("%Y-%m-%dT%H:%M:%S%z")
                 if categories:
                     jsonld['keywords'] = categories
                 jsonld['isPartOf'] = {'url' : blog_url, '@type':"Blog",'name': blog_name }
@@ -103,6 +107,7 @@ def consume(url, server):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads blog posts into cherry')
     parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--toindex', help='Elastic index, default to cherry', default='cherry')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--blog', help='Which blog to load. Available are: %s or \'all\'' % list(blogs.keys()))
     group.add_argument('--feed', help='Load atom data from feed')
@@ -116,6 +121,6 @@ if __name__ == "__main__":
     if args['blog']:
         urls = list(blogs.values()) if args['blog'] == 'all' else [blogs[args['blog']]]
         for url in urls:
-            consume(url, args['server'])
+            consume(url, args['server'], args['toindex'])
     else:
-        consume(args['feed'], args['server'])
+        consume(args['feed'], args['server'], args['toindex'])
