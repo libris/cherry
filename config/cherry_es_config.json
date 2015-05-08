@@ -74,7 +74,7 @@
                     "min_shingle_size": 2,
                     "max_shingle_size": 2,
                     "output_unigrams":  false,
-                    "filler_token": ''
+                    "filler_token": ""
                 },
                 "stopword_filter": {
                     "type": "stop",
