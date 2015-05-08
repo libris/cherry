@@ -29,7 +29,8 @@ module.exports = React.createClass({
     return {
       loading: true,
       section: 'home',
-      q: ''
+      q: '',
+      end: false
     }
   },
   plant: function(topic) {
@@ -55,7 +56,7 @@ module.exports = React.createClass({
     var old  = this.getQuery()
     var hits = collections.get('hits')
     this.setState({
-      q: next.q
+      q: next.q || this.state.q
     }, function() {
       if ( this.state.section !== nextProps.route.name )
         this.setState({
@@ -96,7 +97,8 @@ module.exports = React.createClass({
       console.info('Planting topic: '+topic)
       this.plant(topic).then(next).catch(function(e) {
         console.warn('No more seeds available')
-      })
+        this.setState({ end: true })
+      }.bind(this))
     }.bind(this)
     this.setState({ growing: true })
     sow()
@@ -126,13 +128,15 @@ module.exports = React.createClass({
         })[0]
         this.setState({
           q: topic
+        }, function() {
+          console.log('q', this.state.q)
+          this.plant( topic )
         })
-        this.plant( topic )
       }
     })
   },
   grow: function(e) {
-    if ( this.state.growing || !this.state.q )
+    if ( this.state.end || this.state.growing || !this.state.q )
       return
     e && e.preventDefault()
     var query = this.getQuery()
@@ -157,14 +161,17 @@ module.exports = React.createClass({
     else
       content = this.renderItems() || <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
     
-    var growtext = this.state.growing ? <i className="fa fa-4x fa-circle-o-notch fa-spin"></i> : 'Click to plant'
-    var grow = collections.get('hits').length ? <button className="growspin" onClick={this.grow}>{growtext}</button> : null
+    var end = null
+    if ( collections.get('hits').length ) {
+      var endContent = this.state.growing ? <i className="fa fa-4x fa-circle-o-notch fa-spin"></i> : 'Sök vidare'
+      end = this.state.end ? <div className="end">Inga fler resultat.</div> : <button className="growspin" onClick={this.grow}>{endContent}</button>
+    }
 
     return (
       <div>
         <Menu section={this.state.section} query={this.getQuery()} />
         <div ref="container">{content}</div>
-        { grow }
+        { end }
       </div>
     )
   }

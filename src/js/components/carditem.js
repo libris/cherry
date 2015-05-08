@@ -4,7 +4,7 @@ var CreatorName = require('./creatorname')
 
 module.exports = React.createClass({
   getSlug: function() {
-    return 'post/'+this.props.data['@id'].replace(/\//g, '')
+    return '/post/'+this.props.data['@id'].replace(/\//g, '')
   },
   render: function() {
     var data = this.props.data
