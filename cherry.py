@@ -183,24 +183,6 @@ def api_search():
     return json.dumps(rtext)
 
 
-def child_texts(p):
-    query = {
-        "_source": "text",
-        "query": {
-        "has_parent" : {
-            "parent_type" : "record",
-            "query" : {
-                "term" : {
-                    "_id" :p
-                }
-            }
-        }
-    } }
-    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
-    hits = r.get('hits', {}).get('hits', [])
-    texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
-    return texts
-
 def find_children(doc_type, parent_id):
     query = {
         "query": {
@@ -234,6 +216,7 @@ def find_preferred_cover(ident):
 def api_flt_records_with_related():
     query = request.args.get('q')
     num_related = request.args.get('n')
+    ident = request.args.get('i')
     if num_related:
         num_related = int(num_related)
     else:
@@ -244,7 +227,7 @@ def api_flt_records_with_related():
     t0 = time.time()
     #related = do_related_query(query)['items']
     #executed = ' '.join([query] + related[:num_related])
-    flt = assemble_flt_records(query, excluded_ids)
+    flt = assemble_flt_records(query, ident, excluded_ids)
     #flt['query'] = {'words':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
@@ -255,11 +238,14 @@ def api_flt_records():
     query = request.args.get('q')
     return json_response(assemble_flt_records(query))
 
-def assemble_flt_records(query, excluded_ids=[]):
+def assemble_flt_records(query, ident= None, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = excluded_ids
-    result = do_flt_query(es, size=50, q=query, index_name=app.config['CHERRY'])
+    if ident:
+        parent_ids.append(ident)
+
+    result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
