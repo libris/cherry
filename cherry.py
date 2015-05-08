@@ -586,6 +586,7 @@ def load_record_with_all_children(recordpath):
     ident = recordpath.replace("/", "")
     record = es.get_source(index=app.config['CHERRY'], doc_type='record', id=ident)
     if record:
+        record['identifier'] = ident
         record['annotation'] = find_children('annotation', ident)
         record['excerpt'] = find_children('excerpt', ident)
         record['coverArt'] = find_children('cover', ident)
