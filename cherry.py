@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os, io, re
-from os.path import isfile
+from os.path import isfile, join
 import json
 from flask import (Flask, render_template, request, make_response, Response, abort, send_file, session, redirect, jsonify)
 import jinja2
@@ -601,13 +601,12 @@ def load_record_with_all_children(recordpath):
 
 @app.route('/xinfo/<path:xinfopath>')
 def load_image(xinfopath):
-    filename = "{0}.jpg".format(xinfo_cover.split("/")[0].split(":")[1])
+    filename = "{0}.jpg".format(xinfopath.split("/")[0].split(":")[1])
     try:
-        with open(join("../xinfo_cover/", filename), "rb") as imgfile:
+        with open(join(app.config['XINFO_PATH'], filename), "rb") as imgfile:
             return send_file(io.BytesIO(imgfile.read()), attachment_filename=filename, mimetype="image/jpeg")
     except Exception as e:
-        print("Resource /xinfo/{0} was not found.".format(xinfopath))
-        print("Exception:", e)
+        print("failed to load file {0}: {1}".format(filename, e))
         abort(404)
 
 @app.route('/', defaults={'path': ''})
