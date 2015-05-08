@@ -61,18 +61,15 @@
   				}
   			}
   			.opinionText {
+  				margin: 10px 0px 20px 0px;
   				padding: 0px 20px;
-  				p {
-  					margin: 10px 0px 20px 0px;
+  				span {
+  					margin: 20px 0px 20px 0px;
   				}
   				&.folded {
-  					.rest {
-  						margin-top: 0px;
-  						display: none;
-  					}
   					.readMore {
   						display: block;
-  						margin: 0px auto 20px auto;
+  						margin: 20px auto 0px auto;
   						color: $dark-grey;
   						font-weight: 700;
   						border: 2px solid $blue;
