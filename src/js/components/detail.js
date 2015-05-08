@@ -19,7 +19,8 @@ module.exports = React.createClass({
 
 	getInitialState: function() {
 		return {
-			loading: true
+      loading: true,
+      coverFolded: true
 		}
 	},
 
@@ -28,13 +29,6 @@ module.exports = React.createClass({
 			loading: false
 		})
 	},
-	
-
-  getInitialState: function() {
-    return {
-      coverFolded: true
-    }
-  },
 
   toggleFold: function () {
     this.setState({
