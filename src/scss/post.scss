@@ -7,7 +7,7 @@
 		width: 100%;
 		overflow: hidden;
 		&.folded {
-			max-height: 150px;
+			max-height: 265px;
 			@include breakpoint('tablet-portrait') {
 				max-height: none;
 			}

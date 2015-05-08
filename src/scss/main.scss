@@ -182,5 +182,11 @@ body{background:$bg-color;margin: 0;
   }
 }
 
-
-
+.creatorName {
+  font-style: italic;
+}
+.loader {
+  color: $dark-grey;
+  width: 4em;
+  margin: auto;
+}
