@@ -576,6 +576,10 @@ def api_json():
     """For dev purposes only."""
     return raw_json_response(api_search())
 
+@app.route('/api/bok')
+def load_record_by_query():
+    return load_record_with_all_children(request.args.get('q'))
+
 @app.route('/bok/<path:recordpath>')
 def load_record_with_all_children(recordpath):
     print("recordpath", recordpath)

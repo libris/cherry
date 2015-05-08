@@ -37,7 +37,7 @@ def main(**args):
         }
     }
 
-    images = find_images(scan(es, query, scroll='5m', index='cherry', doc_type='cover'))
+    images = find_images(scan(es, query, scroll='30m', index='cherry', doc_type='cover'))
 
     counter = 0
 
