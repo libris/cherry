@@ -223,10 +223,7 @@ def api_flt_records_with_related():
     print("excluded_ids", excluded_ids)
 
     t0 = time.time()
-    #related = do_related_query(query)['items']
-    #executed = ' '.join([query] + related[:num_related])
     flt = assemble_flt_records(query, ident, excluded_ids)
-    #flt['query'] = {'words':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
     return json_response(flt)
@@ -257,7 +254,7 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
                               'title': parent_record['title'],
                               'creator': parent_record['creator']
                              }
-            #hitlist_record['annotation'] = [hit['_source']]
+            hitlist_record['annotation'] = [hit['_source']]
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
             items.append(hitlist_record)
