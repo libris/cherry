@@ -158,10 +158,11 @@ body{background:$bg-color;margin: 0;
         margin: 0px;
         padding: 5px 0px;
         display: block;
-        overflow: scroll;
+        white-space: nowrap;
+        overflow-x: auto;
         list-style-type: none;
         li {
-          display: inline;
+          display: inline-block;
           padding: 5px 10px;
         }
       }
