@@ -13,7 +13,7 @@ module.exports = CollectionFactory({
     }
   },
   posts: {
-    dataUrl: '/api/posts',
+    dataUrl: '/api/bok',
     getCollectionList: function(result) {
       return [result]
     }
