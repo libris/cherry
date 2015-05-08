@@ -35,7 +35,6 @@ module.exports = React.createClass({
     return new Promise(function(resolve, reject) {
       collections.get('hits').load({ q: topic }, { append: true }).then(function(response) {
         if ( !response.items.length || !response.query.relatedWords.length ) {
-          hits.remove(hits.at(hits.length-1))
           reject(topic+' was not suitable for planting')
         } else {
           resolve(topic)
@@ -43,58 +42,75 @@ module.exports = React.createClass({
       })
     })
   },
-  getQueryFromRoute: function(route) {
-    var query = Query.parse(route.params[1])
-    return query.hasOwnProperty('q') ? query.q : ''
+  getQuery: function(route) {
+    route = route || this.props.route
+    if (typeof route.params != 'object')
+      throw new Error('Could not get query, route is invalid')
+    return Query.parse(route.params[route.params.length-1])
   },
   componentWillReceiveProps: function(nextProps) {
-    var next = this.getQueryFromRoute(nextProps.route)
-    var old  = this.getQueryFromRoute(this.props.route)
+    var next = this.getQuery(nextProps.route)
+    var old  = this.getQuery()
+    var hits = collections.get('hits')
     if ( this.state.section !== nextProps.route.name )
       this.setState({
         section: nextProps.route.name
       })
-    if ( next && next !== old ) {
-      // check if we are appending or reloading
-      if ( !old || next.substr(0, old.length) != old )
-        collections.get('hits').reset()
-      this.loadSequence(next)
+    if ( (old.q || next.q) && next.q !== old.q ) {
+      hits.reset()
     }
+    if ( next.q !== old.q || next.more !== old.more )
+      this.loadSequence(next)
   },
+  // tries an array of seeds
   sow: function(topics) {
     return new Promise(function(resolve, reject) {
       var plant = function(topic) {
         this.plant(topic).then(resolve).catch(function(e) {
           topics.shift()
+          hits.remove(hits.at(hits.length-1))
           topics.length ? plant(topics[0]) : reject('No more topics :(')
         })
       }.bind(this)
-      if ( _.isArray(topics) )
-        plant(topics[0])
-      else
-        this.plant(topics).then(resolve)
+      plant(topics[0])
     }.bind(this))
   },
-  loadSequence: function(q) {
-    var sequence = q.split('|')
+  loadSequence: function(query) {
+    query = query || this.getQuery()
+    console.info('Loading sequence', query)
+    var topic = query.q
+    var more = Math.min((parseInt(query.more, 10) || 0), 10)
     var i = 0
-    var part = sequence[i]
+    if ( !topic ) {
+      console.warn('Cannot load sequence - no topic provided')
+      return
+    }
+    var hits = collections.get('hits')
     var saw = function() {
-      console.log('sowing', part.replace(/\+/g,' '))
-      this.sow(part.replace(/\+/g,' ')).then(function() {
-        part = sequence[++i]
-        part && saw()
+      if ( hits.at(i) ) // If we already have a model in the same sequence order, skip loading
+        return next()
+      console.info('Planting topic: '+topic)
+      this.plant(topic).then(next).catch(function(e) {
+        console.warn('No more seeds available')
       })
     }.bind(this)
     saw()
+    function next() {
+      if ( i<more ) {
+        var hit = hits.at(hits.length-1)
+        topic = hit.get('query').relatedWords.splice(0,3).join(' ')
+        i++
+        saw()
+      }
+    }
   },
   dataDidLoad: function() {
     this.setState({
       loading: false
     }, function() {
-      var q = this.getQueryFromRoute(this.props.route)
+      var q = this.getQuery().q
       if ( q )
-        this.loadSequence(q)
+        this.loadSequence()
       else {
         var topics = collections.get('trending').map(function(model) {
           return model.get('topic')
@@ -105,20 +121,19 @@ module.exports = React.createClass({
       }
     })
   },
-  grow: function() {
-    var hits = collections.get('hits')
-    var last = hits.at(hits.length-1)
-    var related = last.get('query').relatedWords.splice(0, 3)
-    var q = this.getQueryFromRoute(this.props.route) + '|' + related.join('+')
-    Router.navigate('/'+this.state.section+'/?' + Query.stringify({q: q}), true)
+  grow: function(e) {
+    e.preventDefault()
+    var query = this.getQuery()
+    query.more = ( parseInt(query.more) || 0 ) + 1
+    Router.navigate('/'+this.state.section+'/?' + Query.stringify(query), true)
   },
   renderItems: function() {
     var content = null
     var hits = collections.get('hits')
     if ( hits && hits.length ) {
       content = hits.map(function(model, i) {
-        return <HitComponent key={model.cid} hideKeywords={!i} model={model} />
-      })
+        return <HitComponent key={model.cid} hideKeywords={this.state.section != 'ord' && i === 0} model={model} />
+      }, this)
     }
     return content
   },

@@ -9,6 +9,7 @@ var Router = Backbone.Router.extend({
     this.route(/^trends(\/\?(.*))?$/, 'trends')
     this.route(/^winners(\/\?(.*))?$/, 'winners')
     this.route(/^toplist(\/\?(.*))?$/, 'toplist')
+    this.route(/^ord(\/\?(.*))?$/, 'ord')
     this.route(/^$/, 'trends')
 
     this.route(/(.*)\/+$/, "trailFix", function (id) {

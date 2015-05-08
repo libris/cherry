@@ -14,6 +14,7 @@ var handlers = {
   trends: HomeComponent,
   winners: HomeComponent,
   toplist: HomeComponent,
+  ord: HomeComponent,
   post: PostComponent,
   404: NotFoundComponent 
 }

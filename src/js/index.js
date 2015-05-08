@@ -20,6 +20,7 @@ var render = function(route) {
 }
 
 var didClick = false
+var routeName = ''
 PubSub.on('navclick', function() {
   didClick = true
 })
@@ -41,11 +42,12 @@ Router.on('route', function(name, params) {
 
   if ( Router.backbutton )
     crumbs.splice(-2,2)
-  else 
+  else if ( name !== routeName )
     window.scrollTo(0,0)
   crumbs.push(fragment)
 
   didClick = false
+  routeName = name
 
 })
 
