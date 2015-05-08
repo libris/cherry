@@ -157,7 +157,7 @@ module.exports = React.createClass({
     else
       content = this.renderItems() || <div className="loader"><i className="fa fa-4x fa-circle-o-notch fa-spin"></i></div>
     
-    var growtext = this.state.growing ? 'Planting more seeds...' : 'Click to plant'
+    var growtext = this.state.growing ? <i className="fa fa-4x fa-circle-o-notch fa-spin"></i> : 'Click to plant'
     var grow = collections.get('hits').length ? <button className="growspin" onClick={this.grow}>{growtext}</button> : null
 
     return (
