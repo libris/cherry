@@ -71,7 +71,7 @@ module.exports = React.createClass({
         return <Opinion data={item} />
     })
     var opinionClasses = ['info-section', 'opinionList']
-    if(!opinions || opinions.length < 1)
+    if(!opinions || typeof opinions[0] === 'undefined')
       opinionClasses.push('hidden')
 
     return (
