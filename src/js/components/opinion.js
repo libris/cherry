@@ -1,4 +1,5 @@
 var React = require('react')
+var utils = require('../utils')
 
 module.exports = React.createClass({
 
@@ -14,20 +15,11 @@ module.exports = React.createClass({
     })
   },
 
-  splitTextApprox: function (text, approxLength) {
-    var split = []
-    var marker = approxLength
-    while(marker < text.length && text[marker] !== ' ')
-      marker++;
-    split.push(text.substr(0, marker))
-    split.push(text.substr(marker))
-    return split
-  },
 
   render: function() {
 
     var opinion = this.props.data;
-    var opinionTexts = this.splitTextApprox(opinion.text, 250)
+    var opinionTexts = utils.splitTextApprox(opinion.text, 250)
     var opinionClasses = ['opinionText']
     this.state.opinionFolded && opinionClasses.push('folded')
 
