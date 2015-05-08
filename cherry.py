@@ -25,6 +25,7 @@ from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 from search import *
 from nltk.metrics import edit_distance
+from os.path import commonprefix
 
 pp = pprint.PrettyPrinter(indent=1)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -182,24 +183,6 @@ def api_search():
     return json.dumps(rtext)
 
 
-def child_texts(p):
-    query = {
-        "_source": "text",
-        "query": {
-        "has_parent" : {
-            "parent_type" : "record",
-            "query" : {
-                "term" : {
-                    "_id" :p
-                }
-            }
-        }
-    } }
-    r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
-    hits = r.get('hits', {}).get('hits', [])
-    texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
-    return texts
-
 def find_children(doc_type, parent_id):
     query = {
         "query": {
@@ -233,6 +216,7 @@ def find_preferred_cover(ident):
 def api_flt_records_with_related():
     query = request.args.get('q')
     num_related = request.args.get('n')
+    ident = request.args.get('i')
     if num_related:
         num_related = int(num_related)
     else:
@@ -243,7 +227,7 @@ def api_flt_records_with_related():
     t0 = time.time()
     #related = do_related_query(query)['items']
     #executed = ' '.join([query] + related[:num_related])
-    flt = assemble_flt_records(query, excluded_ids)
+    flt = assemble_flt_records(query, ident, excluded_ids)
     #flt['query'] = {'words':query,'relatedWords':related}
     flt['duration'] = "PT{0}S".format(time.time() - t0)
 
@@ -254,11 +238,14 @@ def api_flt_records():
     query = request.args.get('q')
     return json_response(assemble_flt_records(query))
 
-def assemble_flt_records(query, excluded_ids=[]):
+def assemble_flt_records(query, ident= None, excluded_ids=[]):
     print("assemble_flt_records. query:", query)
     items = []
     parent_ids = excluded_ids
-    result = do_flt_query(es, size=50, q=query, index_name=app.config['CHERRY'])
+    if ident:
+        parent_ids.append(ident)
+
+    result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
     qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
@@ -415,7 +402,7 @@ def api_blogtrends():
                 "filter" : {
                     "range" : {
                         "created" : {
-                            "gte": "now-5M",
+                            "gte": "now-2M",
                             "lte": "now"
                         }
                     }
@@ -430,29 +417,47 @@ def api_blogtrends():
     r = es.search(body=query, index=app.config['CHERRY'], doc_type='blog')
     #return json.dumps(r)
 
-    u = get_related_words_from_query_result(r, '')
+    u = get_related_words_from_query_result(r, q)
     return json.dumps({"items": u})
 
 @app.route('/api/related')
 def api_related():
     return json_response(do_related_query(request.args.get('q')))
 
+def prefix_diff(l):
+    bigrams = [s for s in l if len(s.split(" ")) > 1] #any of the strings is a bigram
+    #print("bigrams: ", bigrams)
+    if bigrams:
+        common = [a for a in l[0].split(" ") if a in l[1].split(" ")]
+        if common:
+            print("common", common)
+            return 0
+        else:
+            return 4
+
+
+    l.sort(key=len)
+    thelength = len(l[-1][len(commonprefix(l)):])
+    print("thelength", thelength)
+    return len(l[-1][len(commonprefix(l)):])
+
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
     rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
-        #unique = [t for t in rel_terms if q not in t]
+        #unique = [i["key"] for i in rel_terms if not i["key"].isdigit() and prefix_diff([i["key"], q]) > 3]
         for i in rel_terms:
-            if not i["key"].isdigit() and edit_distance(i["key"], q) > 3:
-                unique.append(i["key"])
-               # ok = True
-               # for u in unique:
-               #     if edit_distance(i["key"], u) < 4:
-               #         print("{0} not ok because {1}".format(i["key"], u))
-               #         ok = False
-               # if ok:
-               #     unique.append(i["key"])
+            k = i["key"].strip()
+            if not k.isdigit() and prefix_diff([q, k]) > 3:
+                #unique.append(k)
+                ok = True
+                for u in unique:
+                    if prefix_diff([k, u]) < 4:
+                        print("{0} not ok because {1}".format(k, u))
+                        ok = False
+                if ok:
+                    unique.append(k)
 
 
         #unique = list(set([cleanup(i["key"]) for i in rel_terms if q not in i["key"]]))

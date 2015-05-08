@@ -1,5 +1,7 @@
 var React = require('react')
 var _ = require('underscore')
+var collections = require('../collections')
+var Query = require('query-string')
 
 module.exports = React.createClass({
 
@@ -10,6 +12,12 @@ module.exports = React.createClass({
   },
 
   render: function() {
+
+    var trends = collections.get('trending').map(function(model, i) {
+      var topic = model.get('topic')
+      var href = '/trends/?' + Query.stringify({ q: topic })
+      return <li><a href={href} key={i+topic}>{topic}</a></li>
+    })
 
     return (
         <div className="menu">
@@ -24,36 +32,7 @@ module.exports = React.createClass({
             <li className="active">
               Förkovra dig
               <ul className="sub-nav">
-                <li>frö</li>
-                <li>ninjor</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>ninjor</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>ninjor</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>ninjor</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>ninjor</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
-                <li>frö</li>
+                {trends}
               </ul>
             </li>
             <li className="">
