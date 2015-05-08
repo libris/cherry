@@ -148,7 +148,7 @@ module.exports = React.createClass({
       content = this.renderItems() || <div>Loading...</div>
     return (
       <div>
-        <Menu />
+        <Menu section={this.state.section} query={this.getQuery()} />
         <div ref="container">{content}</div>
         <button onClick={this.grow}>Visa fler</button>
       </div>
