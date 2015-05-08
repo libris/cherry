@@ -7,7 +7,7 @@ var Opinion = require('./opinion')
 
 module.exports = React.createClass({
 
-	/*
+	
 	mixins: [ Data.mixin ],
 
 	getDataDependencies: function() {
@@ -28,7 +28,7 @@ module.exports = React.createClass({
 			loading: false
 		})
 	},
-	*/
+	
 
   getInitialState: function() {
     return {
@@ -43,15 +43,16 @@ module.exports = React.createClass({
   },
 
   render: function() {
-  	/*
-  	if ( this.state.loading ) {
-  		return <p>loading</p>
-  	}
+  	
+  	// if ( this.state.loading ) {
+   //    return <p>loading</p>
+  	// }
   	var post = posts.getModel({
-  		id: this.props.route.params[0]
+  		'@id': this.props.route.params[0]
   	})
+    console.log(this.props.route.params)
   	console.log('title', post.get('title'))
-  	*/
+  	
 
     var postMock = {
       title : 'Testpost',

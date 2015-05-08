@@ -116,7 +116,7 @@ var BaseCollection = Backbone.Collection.extend({
       return model
     if ( this._loading )
       return new this.model() // return empty model so react can still render
-  },
+  }
 })
 
 module.exports = function(collections) {
