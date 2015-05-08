@@ -17,7 +17,7 @@ module.exports = React.createClass({
       var topic = model.get('topic')
       var href = '/trends/?' + Query.stringify({ q: topic })
       var classNames = []
-      if ( this.props.section == 'trends' && topic == this.props.query.q )
+      if ( this.props.section == 'trends' && topic == this.props.q )
       	classNames.push('active')
       return <li className={classNames.join(' ')}><a href={href} key={i+topic}>{topic}</a></li>
     }, this)

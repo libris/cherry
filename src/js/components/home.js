@@ -169,7 +169,7 @@ module.exports = React.createClass({
 
     return (
       <div>
-        <Menu section={this.state.section} query={this.getQuery()} />
+        <Menu section={this.state.section} q={this.state.q} />
         <div ref="container">{content}</div>
         { end }
       </div>
