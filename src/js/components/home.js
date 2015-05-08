@@ -84,14 +84,14 @@ module.exports = React.createClass({
     var content = null
     var hits = collections.get('hits')
     if ( this.state.loading )
-      content = <p>Loading trending topics_</p>
+      content = <p>Laddar ämnen...</p>
     else
-      content = this.renderItems() || <div>Loading...</div>
+      content = this.renderItems() || <p>Laddar titlar...</p>
     return (
       <div>
         <Menu />
         <div ref="container">{content}</div>
-        <button onClick={this.findSeeds}>Plant some more</button>
+        <button onClick={this.findSeeds}>Visa fler</button>
       </div>
     )
   }

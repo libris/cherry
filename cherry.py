@@ -438,7 +438,7 @@ def api_related():
 
 def get_related_words_from_query_result(rtext, q):
     t0 = time.time()
-    rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
+    rel_terms = rtext.get('aggregations', {}).get('unigrams', {}).get('buckets', [])
     unique = []
     if rel_terms:
         #unique = [t for t in rel_terms if q not in t]

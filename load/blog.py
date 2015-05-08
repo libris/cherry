@@ -27,7 +27,7 @@ blogs = {
 }
 
 
-def consume(url, server):
+def consume(url, server, index_name):
     print("Consuming blog from ", url)
     es = Elasticsearch(server, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
     page = 0
@@ -40,7 +40,7 @@ def consume(url, server):
             next_page = url.format(page=page)
         if page > 1 and next_page == url:
             print("Failure casued looping. Saving documents and breaking.")
-            bulkdata = [ { '_index': 'cherry4', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            bulkdata = [ { '_index': index_name, '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             bulk(es, bulkdata)
             break
 
@@ -66,7 +66,7 @@ def consume(url, server):
 
         if len(entries) == 0:
             print("All posts consumed. Saving ...")
-            bulkdata = [ { '_index': 'cherry4', '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
+            bulkdata = [ { '_index': index_name, '_type': 'blog', '_id' : str(es_id) , '_source': jsondoc } for (es_id, jsondoc) in docs.items() ]
             r = bulk(es, bulkdata)
             print("save result", r)
             break
@@ -107,6 +107,7 @@ def consume(url, server):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Loads blog posts into cherry')
     parser.add_argument('--server', help='Elastic server, default to localhost', default='localhost', nargs='+')
+    parser.add_argument('--toindex', help='Elastic index, default to cherry', default='cherry')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--blog', help='Which blog to load. Available are: %s or \'all\'' % list(blogs.keys()))
     group.add_argument('--feed', help='Load atom data from feed')
@@ -120,6 +121,6 @@ if __name__ == "__main__":
     if args['blog']:
         urls = list(blogs.values()) if args['blog'] == 'all' else [blogs[args['blog']]]
         for url in urls:
-            consume(url, args['server'])
+            consume(url, args['server'], args['toindex'])
     else:
-        consume(args['feed'], args['server'])
+        consume(args['feed'], args['server'], args['toindex'])
