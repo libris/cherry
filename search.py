@@ -1,6 +1,25 @@
 # -*- coding: utf-8 -*-
 import time
 
+def child_texts(es, index_name, p):
+    query = {
+        "_source": "text",
+        "query": {
+        "has_parent" : {
+            "parent_type" : "record",
+            "query" : {
+                "term" : {
+                    "_id" :p
+                }
+            }
+        }
+    } }
+    r = es.search(body=query, index=index_name, doc_type='annotation')
+    hits = r.get('hits', {}).get('hits', [])
+    texts = ' '.join([hit.get('_source').get('text', []) for hit in hits])
+    print("associated texts:", texts)
+    return texts
+
 def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, sort=None, t=None, n=None, f=None, page=None, index_name='cherry'):
     """Will search annotations if no other doctype is given."""
     if not doctype:
@@ -13,7 +32,7 @@ def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, s
 
     if i:
         try:
-            q = child_texts(i)
+            q = child_texts(es, index_name, i)
         except:
             print("no record with id: ", i)
             return {"err": 1, "msg": "Ingen post med angivet id"}
