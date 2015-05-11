@@ -226,7 +226,7 @@ def api_flt():
     if ident:
         excluded_ids.append(ident)
 
-    result = do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
@@ -252,7 +252,7 @@ def api_flt():
 def api_suggest():
     """Suggests spelling corrections, not autocomplete.
     Searches record, field: author_title
-    Returns list of suggestions, shingles.
+    Returns list of suggestions, author_title.shingles.
     """
     q = request.args.get('q')
     precision = 'y'
