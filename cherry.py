@@ -213,6 +213,14 @@ def find_preferred_cover(ident):
 def api_flt():
     size = request.args.get('size',75)
     items = []
+    query = request.args.get('q')
+    num_related = request.args.get('n')
+    ident = request.args.get('i')
+    if num_related:
+        num_related = int(num_related)
+    else:
+        num_related = 2
+    excluded_ids = [ident.replace("/", "") for ident in request.args.get('exclude','').split(",")]
     parent_ids = excluded_ids
     if ident:
         parent_ids.append(ident)
