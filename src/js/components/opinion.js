@@ -25,7 +25,7 @@ module.exports = React.createClass({
 
     return (
       <div className="opinion">
-        <h2><a href={opinion.isPartOf.url} target="_blank">{ opinion.isPartOf.name } <i className="fa fa-external-link-square"></i></a></h2>
+        <h2><a href={opinion.url} target="_blank">{ opinion.isPartOf.name } <i className="fa fa-external-link-square"></i></a></h2>
         <div className={opinionClasses.join(' ')}>
           <span className="beginning">{ opinionTexts[0] }</span>
           <span className="rest">{ this.state.opinionFolded ? '...' : opinionTexts[1] }</span>
