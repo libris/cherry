@@ -13,10 +13,16 @@ module.exports = React.createClass({
     var summary = ''
     // return <div>{data['@id']}</div>
     var filtered = data.annotation.filter(function (item){
-      return item['@type'] == 'BlogPosting'
+      return item['@type'] == 'Summary'
     })
-    if (filtered[0])
-      summary = utils.splitTextApprox(filtered[0].text, 250)[0]
+    if (filtered[0]) {
+      var splitAt = 250
+      console.log(filtered[0])
+      if(filtered[0].text.length > splitAt)
+        summary = utils.splitTextApprox(filtered[0].text, splitAt)[0] + "..."
+      else
+        summary = filtered[0].text
+    }
     
     return (
       <a className="cardItem" href={ this.getSlug() }>
