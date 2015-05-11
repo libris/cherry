@@ -17,7 +17,6 @@ module.exports = React.createClass({
     })
     if (filtered[0]) {
       var splitAt = 250
-      console.log(filtered[0])
       if(filtered[0].text.length > splitAt)
         summary = utils.splitTextApprox(filtered[0].text, splitAt)[0] + "..."
       else
