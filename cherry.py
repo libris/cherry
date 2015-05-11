@@ -54,10 +54,10 @@ def json_response(data):
 
 @app.route('/api/search')
 def api_search():
-    """Search by q (excerpt), title or creator. 
+    """Search with q by excerpt: text, name, or record: title or creator. 
     Searching record and excerpt.
-    Returns hitlist, aggregation: family name ...
-    Used for: 
+    Returns hitlist, aggregation: family name, text.bigrams
+    Used for: nothing yet.
     """
     print("search")
     q = request.args.get('q')#fritext
@@ -212,6 +212,11 @@ def find_preferred_cover(ident):
 
 @app.route('/api/flt_records_with_related')
 def api_flt_records_with_related():
+    """Search (with do_flt_query): flt by textfield 
+    Type: annotation
+    Return: _parent (cover, id, title, creator), _source, aggs: text.bigrams
+
+    """
     query = request.args.get('q')
     num_related = request.args.get('n')
     ident = request.args.get('i')
@@ -241,7 +246,7 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
         parent_ids.append(ident)
 
     result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
-    qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
+    qmeta = {"executed":query, "relatedWords":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
@@ -271,7 +276,10 @@ def api_flt():
 
 @app.route('/api/suggest')
 def api_suggest():
-    """Suggests spelling corrections, not autocomplete."""
+    """Suggests spelling corrections, not autocomplete.
+    Searches record, field: author_title
+    Returns list of suggestions, shingles.
+    """
     q = request.args.get('q')
     precision = 'y'
 
@@ -382,19 +390,10 @@ def api_complete():
 
 @app.route('/api/blogtrends')
 def api_blogtrends():
-    """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt. Lägg till begränsning tidsintervall när fältet är indexerat."""
-    q = request.args.get('q') if request.args.get('q') else ''
+    """Måste välja ett subset av alla dokument för att significant_terms ska bli meningsfullt.
+    Takes no arguments, returns significant terms from last week of blog posts.
+    """
     query = {
-        #"fields": "aggregations",
-   #     "query": {
-
-   #         "query_string" : {
-   #             "fields" : ["text", "name"],
-   #             "default_operator" : "AND",
-   #             "query" : q,
-
-   #         }
-   #     },
         "query": {
             "constant_score" : {
                 "filter" : {
@@ -415,7 +414,7 @@ def api_blogtrends():
     r = es.search(body=query, index=app.config['CHERRY'], doc_type='blog')
     #return json.dumps(r)
 
-    u = get_related_words_from_query_result(r, q)
+    u = get_related_phrases_from_query_result(r, " ")
     u = [w for w in u if len(w.split(" ")) > 1]
     return json.dumps({"items": u})
 
@@ -436,7 +435,7 @@ def prefix_diff(l):
     l.sort(key=len)
     return len(l[-1][len(commonprefix(l)):])
 
-def get_related_words_from_query_result(rtext, q):
+def get_related_phrases_from_query_result(rtext, q):
     t0 = time.time()
     rel_terms = rtext.get('aggregations', {}).get('bigrams', {}).get('buckets', [])
     unique = []
@@ -462,6 +461,9 @@ def get_related_words_from_query_result(rtext, q):
 
 
 def do_related_query(q):
+    """Search by q, record - author_title, and annotation - text
+    Return aggs: significant terms, cleaned up by get_related_phrases_from_query_result-method.
+    """
     print("related")
     precision = 'y'
 
@@ -477,7 +479,7 @@ def do_related_query(q):
                             "query_string": {
                                 "default_field" : "author_title",
                                 "default_operator" : "AND",
-                                "query" : q
+                                "query" : "{0}".format(q)
                             }
                         }
                     }},
@@ -493,8 +495,8 @@ def do_related_query(q):
         }}}},
 
         "aggs" : {
-            "unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-            #"bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
+            #"unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
         }
 
     }
@@ -504,7 +506,7 @@ def do_related_query(q):
     #HERE is the elastic search call
     r = es.search(body=query, index=app.config['CHERRY'], doc_type='annotation')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    return r
+    #return r
 
     rtext = r
     if rtext.get('status', 0):
@@ -513,7 +515,7 @@ def do_related_query(q):
         err['exception'] = r.text
         return err
 
-    return {"items": get_related_words_from_query_result(rtext, q) }
+    return {"items": get_related_phrases_from_query_result(rtext, q) }
 
 @app.route('/api/children')
 def api_children():
