@@ -23,7 +23,7 @@ import operator
 #from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
-from search import *
+import search
 from nltk.metrics import edit_distance
 from os.path import commonprefix
 
@@ -285,8 +285,8 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
     if ident:
         parent_ids.append(ident)
 
-    result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
-    qmeta = {"executed":query, "relatedWords":get_related_phrases_from_query_result(result, query)}
+    result = search.do_flt_query(es, args={'size':50, 'q':query, 'i':ident}, index_name=app.config['CHERRY'])
+    qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
@@ -306,7 +306,6 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
         parent_ids.append(ident)
 
     return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
-
 
 
 @app.route('/api/suggest')

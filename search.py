@@ -20,8 +20,20 @@ def child_texts(es, index_name, p):
     print("associated texts:", texts)
     return texts
 
-def do_flt_query(es, size=75, q=None, i=None, doctype=None, frm=None, to=None, sort=None, t=None, n=None, f=None, page=None, index_name='cherry'):
+def do_flt_query(es, args, index_name='cherry'):
     """Will search annotations if no other doctype is given."""
+    size=args.get('size')
+    q = args.get('q')
+    i = args.get('i')
+    doctype = args.get('doctype')
+    frm = args.get('frm')
+    to= args.get('to')
+    sort= args.get('sort')
+    t = args.get('t')
+    n = args.get('n')
+    f = args.get('f')
+    page = args.get('page')
+
     if not doctype:
         doctype=['annotation']
     n = 50
