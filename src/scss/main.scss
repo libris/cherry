@@ -77,12 +77,12 @@ body{background:$bg-color;margin: 0;
 
 .keyword {
   margin: 10px 7px;
-  border-radius: 8px;
-  padding: 10px 20px;
+  border-radius: 6px;
+  padding: 6px 14px;
   font-weight: 700;
   text-transform: lowercase;
   font-weight: bolder;
-  line-height: 2;
+  line-height: 1.8;
 }
 .taste {
   font-size: 20pt;
@@ -101,17 +101,32 @@ body{background:$bg-color;margin: 0;
 	margin: 0px 50px;
 }
 .keywordBar {
-  padding: 10px 0px;
+  padding: 20px 0px 10px;
   width: 100%;
-	font-size: 18pt;
+	font-size: 12pt;
   overflow: scroll;
+  margin-top: 20px;
+  border-top: 1px solid #ddd;
 }
 
 .growspin {
   width: 100%;
-  height: 30px;
-  line-height: 30px;
-  background: rgba(0,0,0,.1)
+  height: 50px;
+  line-height: 50px;
+  background: $blue;
+  border: none;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 20px;
+  color: #fff;
+  i { 
+    font-size: 22px;
+    color: #fff;
+    line-height: 50px;
+  }
 }
 
 .menu {
@@ -145,10 +160,11 @@ body{background:$bg-color;margin: 0;
         margin: 0px;
         padding: 5px 0px;
         display: block;
-        overflow: scroll;
+        white-space: nowrap;
+        overflow-x: auto;
         list-style-type: none;
         li {
-          display: inline;
+          display: inline-block;
           padding: 5px 10px;
         }
       }
