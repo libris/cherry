@@ -213,42 +213,6 @@ def find_preferred_cover(ident):
 def api_flt():
     size = request.args.get('size',75)
     items = []
-    parent_ids = excluded_ids
-    if ident:
-        parent_ids.append(ident)
-
-    result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
-    qmeta = {"executed":query, "relatedWords":get_related_phrases_from_query_result(result, query)}
-
-    for hit in result.get('hits',{}).get('hits',[]):
-        ident = hit['fields']['_parent']
-        cover_art_url = find_preferred_cover(ident)
-        if cover_art_url and not ident in parent_ids:
-            parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
-            hitlist_record = {
-                              '@id': parent_record['@id'],
-                              'identifier': ident,
-                              'title': parent_record['title'],
-                              'creator': parent_record['creator']
-                             }
-            hitlist_record['annotation'] = [hit['_source']]
-            if cover_art_url: 
-                hitlist_record['coverArt'] = cover_art_url
-            items.append(hitlist_record)
-        parent_ids.append(ident)
-
-    return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
-
-    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype'), index_name=app.config['CHERRY']))
-
-
-@app.route('/api/flt_records_with_related')
-def api_flt_records_with_related():
-    """Search (with do_flt_query): flt by textfield 
-    Type: annotation
-    Return: _parent (cover, id, title, creator), _source, aggs: text.bigrams
-
-    """
     query = request.args.get('q')
     num_related = request.args.get('n')
     ident = request.args.get('i')
@@ -257,33 +221,18 @@ def api_flt_records_with_related():
     else:
         num_related = 2
     excluded_ids = [ident.replace("/", "") for ident in request.args.get('exclude','').split(",")]
-    print("excluded_ids", excluded_ids)
-
-    t0 = time.time()
-    flt = assemble_flt_records(query, ident, excluded_ids)
-    flt['duration'] = "PT{0}S".format(time.time() - t0)
-
-    return json_response(flt)
-
-@app.route('/api/flt_records')
-def api_flt_records():
-    query = request.args.get('q')
-    return json_response(assemble_flt_records(query))
-
-def assemble_flt_records(query, ident= None, excluded_ids=[]):
-    print("assemble_flt_records. query:", query)
-    items = []
-    parent_ids = excluded_ids
+    #^^flt with related
+    #vv assemble
     if ident:
-        parent_ids.append(ident)
+        excluded_ids.append(ident)
 
-    result = search.do_flt_query(es, args={'size':50, 'q':query, 'i':ident}, index_name=app.config['CHERRY'])
-    qmeta = {"executed":query, "relatedWords":get_related_words_from_query_result(result, query)}
+    result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit['fields']['_parent']
         cover_art_url = find_preferred_cover(ident)
-        if cover_art_url and not ident in parent_ids:
+        if cover_art_url and not ident in excluded_ids:
             parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
             hitlist_record = {
                               '@id': parent_record['@id'],
@@ -295,16 +244,15 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
             if cover_art_url: 
                 hitlist_record['coverArt'] = cover_art_url
             items.append(hitlist_record)
-        parent_ids.append(ident)
+        excluded_ids.append(ident)
 
-    return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
-
+    return json_response({ "@context":"/cherry.jsonld", "query":qmeta, "items":items })
 
 @app.route('/api/suggest')
 def api_suggest():
     """Suggests spelling corrections, not autocomplete.
     Searches record, field: author_title
-    Returns list of suggestions, shingles.
+    Returns list of suggestions, author_title.shingles.
     """
     q = request.args.get('q')
     precision = 'y'

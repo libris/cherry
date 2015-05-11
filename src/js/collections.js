@@ -7,7 +7,7 @@ module.exports = CollectionFactory({
     cacheTTL: 0
   },
   hits: {
-    dataUrl: '/api/flt_records_with_related',
+    dataUrl: '/api/flt',
     getCollectionList: function(result) {
       return [result]
     }
