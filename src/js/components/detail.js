@@ -66,13 +66,19 @@ module.exports = React.createClass({
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
 
-    var opinions = post.get('annotation').map(function (item, i) {
-      if (item['@type'] === 'Blogposting')
-        return <Opinion data={item} />
+    var blogPosts = post.get('annotation').filter(function (item){
+      return item['@type'] == 'BlogPosting'
+    })
+
+    var opinions = blogPosts.map(function (item, i) {
+      if (item['@type'] === 'BlogPosting') {
+        return <Opinion key={i} data={item} />
+      }
     })
     var opinionClasses = ['info-section', 'opinionList']
-    if(!opinions || typeof opinions[0] === 'undefined')
+    if(blogPosts.length < 1) {
       opinionClasses.push('hidden')
+    }
 
     return (
     	<div className="detailView">
