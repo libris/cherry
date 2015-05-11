@@ -23,7 +23,6 @@ import operator
 #from whelk import Storage, Record
 from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
-import search
 from nltk.metrics import edit_distance
 from os.path import commonprefix
 
@@ -226,7 +225,7 @@ def api_flt():
     if ident:
         excluded_ids.append(ident)
 
-    result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    result = do_flt_query(request.args)
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
