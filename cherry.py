@@ -209,6 +209,38 @@ def find_preferred_cover(ident):
 
     return url
 
+@app.route('/api/flt')
+def api_flt():
+    size = request.args.get('size',75)
+    items = []
+    parent_ids = excluded_ids
+    if ident:
+        parent_ids.append(ident)
+
+    result = do_flt_query(es, size=50, q=query, i=ident, index_name=app.config['CHERRY'])
+    qmeta = {"executed":query, "relatedWords":get_related_phrases_from_query_result(result, query)}
+
+    for hit in result.get('hits',{}).get('hits',[]):
+        ident = hit['fields']['_parent']
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url and not ident in parent_ids:
+            parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
+            hitlist_record = {
+                              '@id': parent_record['@id'],
+                              'identifier': ident,
+                              'title': parent_record['title'],
+                              'creator': parent_record['creator']
+                             }
+            hitlist_record['annotation'] = [hit['_source']]
+            if cover_art_url: 
+                hitlist_record['coverArt'] = cover_art_url
+            items.append(hitlist_record)
+        parent_ids.append(ident)
+
+    return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
+
+    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype'), index_name=app.config['CHERRY']))
+
 
 @app.route('/api/flt_records_with_related')
 def api_flt_records_with_related():
@@ -267,11 +299,6 @@ def assemble_flt_records(query, ident= None, excluded_ids=[]):
 
     return { "@context":"/cherry.jsonld", "query":qmeta, "items":items }
 
-
-@app.route('/api/flt')
-def api_flt():
-    size = request.args.get('size',75)
-    return json_response(do_flt_query(es, size=size, q=request.args.get('q'), doctype=request.args.get('doctype'), index_name=app.config['CHERRY']))
 
 
 @app.route('/api/suggest')
