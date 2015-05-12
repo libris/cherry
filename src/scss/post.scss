@@ -64,13 +64,13 @@
       }
       .taste {
         padding: 10px 20px;
-        @include breakpoint('tablet-landscape'){
+        @include breakpoint('tablet-landscape') {
           padding: 10px 40px;
         }
       }
     }
   	&.opinion-extra {
-      @include breakpoint('tablet-landscape'){
+      @include breakpoint('tablet-landscape') {
         .container {
           width: 960px;  
         }
@@ -145,7 +145,7 @@
   	}
   	.fa {
       color: $darker-grey;
-      @include breakpoint('tablet-landscape'){
+      @include breakpoint('tablet-landscape') {
         margin-top: -15px;
         margin-left: 10px;
       }
@@ -161,7 +161,7 @@
   		font-family: $font-content;
   		font-style: italic;
   		font-size: 14pt;
-      @include breakpoint('tablet-landscape'){
+      @include breakpoint('tablet-landscape') {
         width: 50%;
         float: right;
       }
