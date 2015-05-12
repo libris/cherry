@@ -25,6 +25,7 @@ def do_flt_query(es, args, index_name='cherry'):
     size=args.get('size')
     q = args.get('q')
     i = args.get('i')
+    #doctype = args.get('doctype', ['excerpt'])
     doctype = args.get('doctype')
     frm = args.get('frm')
     to= args.get('to')
@@ -34,8 +35,6 @@ def do_flt_query(es, args, index_name='cherry'):
     f = args.get('f')
     page = args.get('page')
 
-    if not doctype:
-        doctype=['annotation']
     n = 50
     date_filter = []
     precision = 'y'

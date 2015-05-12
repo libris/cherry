@@ -227,6 +227,7 @@ def api_flt():
         excluded_ids.append(ident)
 
     result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    return json.dumps(result)
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
