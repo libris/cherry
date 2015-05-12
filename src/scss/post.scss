@@ -107,6 +107,9 @@
   		.opinion {
   			border: solid $lighty-grey;
   			border-width: 0px 0px 2px 0px;
+        @include breakpoint('tablet-landscape') {
+          border-width: 0px 0px 1px 0px;
+        }
   			a {
   				text-decoration: none;
   				color: $dark-grey;
