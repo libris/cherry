@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 from external import Twitter, Google, all_trends
-from search import *
+#from search import *
+from cherry import do_flt_query
 from elasticsearch import Elasticsearch
 
 CONFIG_FILE = 'config.cfg'
+es = None
 
-def verify_trends(trends, es, index):
+def verify_trends(trends, index):
     hot_trends = []
     for trend in trends:
-        results = do_flt_query(es, size=1, q=trend['topic'], index_name=index)
+        results = do_flt_query({"size":1, "q":trend['topic']}, index_name=index)
         if results["hits"]["total"] > 0:
             hot_trends.append(trend)
 
@@ -25,6 +27,6 @@ if __name__ == "__main__":
                       consumer_secret=TWITTER_CONSUMER_SECRET)
     google = Google()
     trends = all_trends(google, twitter)
-    hot_trends = verify_trends(trends, es, CHERRY)
+    hot_trends = verify_trends(trends, CHERRY)
     with open('trending_topics.txt', 'w') as f:
         f.write(str(hot_trends))
