@@ -25,6 +25,7 @@ from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 from nltk.metrics import edit_distance
 from os.path import commonprefix
+import search
 
 pp = pprint.PrettyPrinter(indent=1)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -225,25 +226,27 @@ def api_flt():
     if ident:
         excluded_ids.append(ident)
 
-    result = do_flt_query(request.args)
+    result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    #return json.dumps(result)
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
-        ident = hit['fields']['_parent']
-        cover_art_url = find_preferred_cover(ident)
-        if cover_art_url and not ident in excluded_ids:
-            parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
-            hitlist_record = {
-                              '@id': parent_record['@id'],
-                              'identifier': ident,
-                              'title': parent_record['title'],
-                              'creator': parent_record['creator']
-                             }
-            hitlist_record['annotation'] = [hit['_source']]
-            if cover_art_url: 
-                hitlist_record['coverArt'] = cover_art_url
-            items.append(hitlist_record)
-        excluded_ids.append(ident)
+        ident = hit.get('fields', {}).get('_parent')
+        if ident:
+            cover_art_url = find_preferred_cover(ident)
+            if cover_art_url and not ident in excluded_ids:
+                parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
+                hitlist_record = {
+                                  '@id': parent_record['@id'],
+                                  'identifier': ident,
+                                  'title': parent_record['title'],
+                                  'creator': parent_record['creator']
+                                 }
+                hitlist_record['annotation'] = [hit['_source']]
+                if cover_art_url: 
+                    hitlist_record['coverArt'] = cover_art_url
+                items.append(hitlist_record)
+            excluded_ids.append(ident)
 
     return json_response({ "@context":"/cherry.jsonld", "query":qmeta, "items":items })
 
