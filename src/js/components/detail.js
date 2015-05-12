@@ -4,6 +4,7 @@ var Data = require('../data')
 var ImageComponent = require('ainojs-react-image')
 var CreatorName = require('./creatorname')
 var Opinion = require('./opinion')
+var KeywordBar = require('./keywordbar')
 
 module.exports = React.createClass({
 
@@ -79,11 +80,13 @@ module.exports = React.createClass({
     if(blogPosts.length < 1) {
       opinionClasses.push('hidden')
     }
+    var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
 
     return (
     	<div className="detailView">
     		<div className="info-section summary">
           <div className="container">
+            <KeywordBar keywords={related} />
             <div className={coverClasses.join(' ')} onClick={this.toggleFold}>
               <ImageComponent src={ coverArt.coverArt } lazy={true} ratio={ coverArt.height / coverArt.width} />
             </div>

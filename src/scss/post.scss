@@ -3,6 +3,18 @@
   .image-container {
     box-shadow: 18px 0px 10px -10px rgba(0, 0, 0, 0.15);
   }
+  .keywordBar {
+    display: none;
+    @include breakpoint('tablet-portrait') {
+      display: block;
+      padding: 20px 0px 10px 10px;
+      width: 100%;
+      font-size: 12pt;
+      margin-top: 0px;
+      border: 0px;
+      overflow: hidden;
+    }
+  }
   .taste {
     font-size: 20pt;
     color: $button-white;
@@ -54,12 +66,12 @@
 	.info-section {
     display: inline-block;
 		padding: 0px;
-  	font-family: $font-content;
-  	font-weight: 200;
-  	word-wrap: break-word;
-  	color: $dark-grey;
   	background-color: $lighter-grey;
     .text-container {
+      font-family: $font-content;
+      font-weight: 200;
+      word-wrap: break-word;
+      color: $dark-grey;
       padding: 10px 20px;
     }
     &.summary {
@@ -165,6 +177,10 @@
   		font-family: $font-content;
   		font-style: italic;
   		font-size: 14pt;
+      @include breakpoint('tablet-portrait') {
+        width: 60%;
+        float: right;
+      }
       @include breakpoint('tablet-landscape') {
         width: 50%;
         float: right;
