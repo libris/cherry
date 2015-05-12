@@ -96,10 +96,10 @@ module.exports = React.createClass({
               <i className="fa fa-2x fa-quote-right"></i>
               <p className="quote">
                 {annotation.text}
+                <button className="taste">
+                  Kolla ett smakprov!
+                </button>
               </p>
-    		      <button className="taste">
-                Kolla ett smakprov!
-              </button>
             </div>
           </div>
         </div>
