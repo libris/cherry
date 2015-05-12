@@ -25,11 +25,13 @@ module.exports = React.createClass({
 
     return (
       <div className="opinion">
-        <h2><a href={opinion.url} target="_blank" title="Extern länk till blogginlägget">{ opinion.isPartOf.name } <i className="fa fa-external-link-square"></i></a></h2>
-        <div className={opinionClasses.join(' ')}>
-          <span className="beginning">{ opinionTexts[0] }</span>
-          <span className="rest">{ this.state.opinionFolded ? '...' : opinionTexts[1] }</span>
-          <button className="btn readMore" onClick={this.toggleFold}>Läs hela</button>
+        <div className="text-container">
+          <h2><a href={opinion.url} target="_blank" title="Extern länk till blogginlägget">{ opinion.isPartOf.name } <i className="fa fa-external-link-square"></i></a></h2>
+          <div className={opinionClasses.join(' ')}>
+            <span className="beginning">{ opinionTexts[0] }</span>
+            <span className="rest">{ this.state.opinionFolded ? '...' : opinionTexts[1] }</span>
+            <button className="btn readMore" onClick={this.toggleFold}>Läs hela</button>
+          </div>
         </div>
       </div>
     )

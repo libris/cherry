@@ -1,4 +1,27 @@
 .detailView {
+
+
+  .taste {
+    font-size: 20pt;
+    color: $button-white;
+    background-color: $button-blue;
+    border: 1px solid $button-blue;
+    display: block;
+    font-family: $font-content;
+    margin: 20px auto;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+
+  .info-section {
+    @include breakpoint('tablet-landscape') {
+      width: 100%;
+      .container {
+        width: 960px;
+        margin: 0px auto;
+      }
+    }
+  }
 	min-height: 100vh;
 	margin: 0;
   background-color: $item-bg-color;
@@ -15,32 +38,56 @@
 		@include breakpoint('tablet-portrait') {
 			width: 250px;
 			padding: 15px;
-			float: left;
+      float: left;
+
 		}
 		@include breakpoint('tablet-landscape') {
 			width: 400px;
 			padding: 15px;
-			float: left;
-		}
-		@include breakpoint('desktop') {
-			width: 400px;
-			padding: 15px;
-			float: left;
+      float: left;
 		}
 	}
 	.info-section {
-		padding: 10px 20px;
+    display: inline-block;
+		padding: 0px;
   	font-family: $font-content;
   	font-weight: 200;
   	word-wrap: break-word;
   	color: $dark-grey;
   	background-color: $lighter-grey;
-  	&.opinionList {
+    .text-container {
+      padding: 10px 20px;
+    }
+    &.summary {
+      text-container {
+        float: left;
+      }
+      .taste {
+        padding: 10px 20px;
+        @include breakpoint('tablet-landscape'){
+          padding: 10px 40px;
+        }
+      }
+    }
+  	&.opinion-extra {
+      @include breakpoint('tablet-landscape'){
+        .container {
+          width: 960px;  
+        }
+        .opinionList {
+          width: 48%;
+          float: left;
+        }
+        .extraList {
+          width: 48%;
+          float: left;
+        }
+      }
+      .container {
+        padding: 10px 0px;
+      }
   		padding: 50px 0px;
   		background-color: white;
-  		h1 {
-  			margin: 0px 20px;
-  		}
   		.opinion {
   			border: solid $lighty-grey;
   			border-width: 0px 0px 2px 0px;
@@ -52,7 +99,7 @@
   				}
   			}
   			h2 {
-  				margin: 20px 20px 0px 20px;
+  				margin: 20px 0px 0px 0px;
   				font-size: 14pt;
   				font-weight: bold;
   				.fa {
@@ -62,10 +109,6 @@
   			}
   			.opinionText {
   				margin: 10px 0px 20px 0px;
-  				padding: 0px 20px;
-  				span {
-  					margin: 20px 0px 20px 0px;
-  				}
   				&.folded {
   					.readMore {
   						display: block;
@@ -85,7 +128,6 @@
   		}
   	}
   	&.related {
-  		padding: 50px 20px;
   		background-color: $pale-blue;
   	}
   	h1 {
@@ -101,7 +143,13 @@
   	p {
   		padding: 0px;
   	}
-  	.fa { color: $darker-grey }
+  	.fa {
+      color: $darker-grey;
+      @include breakpoint('tablet-landscape'){
+        margin-top: -15px;
+        margin-left: 10px;
+      }
+    }
   	.providerDate {
   		margin: 0px 0px 50px 0px;
   		font-family: $font-content;
@@ -113,6 +161,10 @@
   		font-family: $font-content;
   		font-style: italic;
   		font-size: 14pt;
+      @include breakpoint('tablet-landscape'){
+        width: 50%;
+        float: right;
+      }
   	}
 	}
 }
