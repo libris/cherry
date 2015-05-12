@@ -5,6 +5,8 @@ var ImageComponent = require('ainojs-react-image')
 var CreatorName = require('./creatorname')
 var Opinion = require('./opinion')
 var KeywordBar = require('./keywordbar')
+var utils = require('../utils')
+var _ = require('underscore')
 
 module.exports = React.createClass({
 
@@ -21,7 +23,8 @@ module.exports = React.createClass({
 	getInitialState: function() {
 		return {
       loading: true,
-      coverFolded: true
+      coverFolded: true,
+      summaryFolded: true
 		}
 	},
 
@@ -34,6 +37,11 @@ module.exports = React.createClass({
   toggleFold: function () {
     this.setState({
       coverFolded: !this.state.coverFolded
+    })
+  },
+  toggleSummary: function () {
+    this.setState({
+      summaryFolded: !this.state.summaryFolded
     })
   },
 
@@ -62,7 +70,11 @@ module.exports = React.createClass({
       }
     }
     var coverArt = post.get('coverArt')[0]
-    var annotation = post.get('annotation')[0];
+
+
+    var annotation = _.find(post.get('annotation'), function (item){
+      return item['@type'] == 'Summary'
+    })
 
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
@@ -82,6 +94,18 @@ module.exports = React.createClass({
     }
     var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
 
+    var summaryClasses = ['quote']
+    var summaryTexts = []
+    if(typeof annotation !== 'undefined' && typeof annotation.text !== 'undefined') {
+      var splitAt = 750
+      summaryTexts = utils.splitTextApprox(annotation.text, splitAt)
+      if (annotation.text.length > splitAt)
+        this.state.summaryFolded && summaryClasses.push('folded')
+
+    } else {
+      summaryTexts = ['','']
+    }
+
     return (
     	<div className="detailView">
     		<div className="info-section summary">
@@ -97,8 +121,12 @@ module.exports = React.createClass({
               </h2>
               <p className="providerDate">{ post.get('publication')[0].providerDate }</p>
               <i className="fa fa-2x fa-quote-right"></i>
-              <p className="quote">
-                {annotation.text}
+              <p className={ summaryClasses.join(' ') }>
+                <span className="beginning">{ summaryTexts[0] }</span>
+                <span className="rest">{ this.state.summaryFolded ? '' : summaryTexts[1] }</span>
+                
+                <span className="readMore">...<a href="#" onClick={this.toggleSummary}> Läs mer</a></span>
+                
                 <button className="taste">
                   Kolla ett smakprov!
                 </button>

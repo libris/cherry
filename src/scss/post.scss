@@ -67,6 +67,7 @@
     display: inline-block;
 		padding: 0px;
   	background-color: $lighter-grey;
+    width: 100%;
     .text-container {
       font-family: $font-content;
       font-weight: 200;
@@ -187,6 +188,15 @@
       @include breakpoint('tablet-landscape') {
         width: 50%;
         float: right;
+      }
+      .readMore { display: none }
+      &.folded {
+        .readMore { display: inline }
+        a {
+          font-weight: bold;
+          text-align: right;
+          color: $blue;
+        }
       }
   	}
 	}
