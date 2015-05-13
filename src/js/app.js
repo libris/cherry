@@ -7,7 +7,7 @@ var Router = require('./router')
 var NotFound = require('./components/404')
 
 var HomeComponent = require('./components/home')
-var PostComponent = require('./components/detail')
+var PostComponent = require('./components/post')
 var NotFoundComponent = require('./components/404')
 
 var handlers = {
