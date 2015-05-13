@@ -13,6 +13,19 @@ module.exports = React.createClass({
 
   render: function() {
 
+    var trendClasses = [],
+        improveClasses = [],
+        derailClasses = []
+
+    if(this.props.section === 'trends')
+        trendClasses.push('active')
+    else if(this.props.section === 'improve')
+        improveClasses.push('active')
+    else if(this.props.section === 'derail')
+        derailClasses.push('active')
+
+    if (this.props.section == 'trends')
+
     var trends = collections.get('trending').map(function(model, i) {
       var topic = model.get('topic')
       var href = '/trends/?' + Query.stringify({ q: topic })
@@ -25,23 +38,24 @@ module.exports = React.createClass({
     return (
         <div className="menu">
           <ul className="main-nav">
-            <li className="">
-              Andra läser
-              <ul className="sub-nav">
-                <li>frö</li>
-                <li>frö</li>
-              </ul>
-            </li>
-            <li className="active">
-              Förkovra dig
+            <li className={trendClasses}>
+              <a href="/trends">Andra läser</a>
               <ul className="sub-nav">
                 {trends}
               </ul>
             </li>
-            <li className="">
-              Spåra ur
+            <li className={improveClasses}>
+              <a href="/improve">Förkovra dig</a>
               <ul className="sub-nav">
                 <li>frö</li>
+                <li>frö</li>
+              </ul>
+            </li>
+            <li className={derailClasses}>
+              <a href="/derail">Spåra ur</a>
+              <ul className="sub-nav">
+                <li>frö</li>
+                <li>ninja</li>
                 <li>frö</li>
               </ul>
             </li>

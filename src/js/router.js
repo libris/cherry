@@ -7,8 +7,8 @@ var Router = Backbone.Router.extend({
     this.route(/.*/, '404')
     this.route(/^post\/([^\/]+)$/, 'post')
     this.route(/^trends(\/\?(.*))?$/, 'trends')
-    this.route(/^winners(\/\?(.*))?$/, 'winners')
-    this.route(/^toplist(\/\?(.*))?$/, 'toplist')
+    this.route(/^improve(\/\?(.*))?$/, 'improve')
+    this.route(/^derail(\/\?(.*))?$/, 'derail')
     this.route(/^ord(\/\?(.*))?$/, 'ord')
     this.route(/^$/, 'trends')
 

@@ -128,8 +128,8 @@ body{background:$bg-color;margin: 0;
   list-style-type: none;
   background-color: $pale-red;
   &>li {
-    margin: 14px 0px;
-    width: 33%;
+    margin: 14px 1.5%;
+    width: 30%;
     background-color: $pale-red;
     display: inline-block;
     text-decoration: none;
@@ -139,6 +139,10 @@ body{background:$bg-color;margin: 0;
     text-align: center;
     font-size: 12pt;
     font-family: $font-headers;
+    a {
+      color: #fff;
+      text-decoration: none;
+    }
     &.active {
       background-color: $red;
       text-decoration: underline;
