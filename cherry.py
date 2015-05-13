@@ -214,28 +214,26 @@ def api_flt():
     items = []
     query = request.args.get('q')
     num_related = request.args.get('n')
-    ident = request.args.get('i')
+    i = request.args.get('i')
     if num_related:
         num_related = int(num_related)
     else:
         num_related = 2
     excluded_ids = [ident.replace("/", "") for ident in request.args.get('exclude','').split(",")]
-    #^^flt with related
-    #vv assemble
-    if ident:
-        excluded_ids.append(ident)
+    if i:
+        excluded_ids.append(i)
 
     result = do_flt_query(request.args)
-    return json.dumps(result)
     #return json.dumps(result)
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
         ident = hit.get('_id')
-        cover_art_url = find_preferred_cover(ident)
-        if cover_art_url and not ident in excluded_ids:#add to query: must have cover
+        cover_art_url = find_preferred_cover(ident) #add to query: must have cover
+        if cover_art_url and not ident in excluded_ids:
             hit["_source"]["identifier"] = ident
             hit["_source"]["coverArt"] = cover_art_url
+            hit["_source"]['annotation'] = find_children('annotation', ident)
             items.append(hit["_source"])
 
     return json_response({ "@context":"/cherry.jsonld", "query":qmeta, "items":items })
