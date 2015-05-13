@@ -231,22 +231,12 @@ def api_flt():
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
     for hit in result.get('hits',{}).get('hits',[]):
-        ident = hit.get('fields', {}).get('_parent')
-        if ident:
-            cover_art_url = find_preferred_cover(ident)
-            if cover_art_url and not ident in excluded_ids:
-                parent_record = es.get_source(index=app.config['CHERRY'],doc_type='record',id=ident)
-                hitlist_record = {
-                                  '@id': parent_record['@id'],
-                                  'identifier': ident,
-                                  'title': parent_record['title'],
-                                  'creator': parent_record['creator']
-                                 }
-                hitlist_record['annotation'] = [hit['_source']]
-                if cover_art_url: 
-                    hitlist_record['coverArt'] = cover_art_url
-                items.append(hitlist_record)
-            excluded_ids.append(ident)
+        ident = hit.get('_id')
+        cover_art_url = find_preferred_cover(ident)
+        if cover_art_url and not ident in excluded_ids:#add to query: must have cover
+            hit["_source"]["identifier"] = ident
+            hit["_source"]["coverArt"] = cover_art_url
+            items.append(hit["_source"])
 
     return json_response({ "@context":"/cherry.jsonld", "query":qmeta, "items":items })
 
@@ -524,7 +514,8 @@ def api_children():
                 "aggs": {
                     "comments": {
                         "terms": { 
-                            "field":"annotationSource.name",
+                            "field":"annotation.annotationSource.name",
+                            #"field":"annotation.@id",
                         },
                     }
                 }
@@ -647,62 +638,46 @@ def do_flt_query(args, index_name=app.config['CHERRY']):
         "sort" : [],
         "size" : size,
 
-    #    "query" :  {"flt": {
-    #        "fields": ["text"],
-    #        "like_text": q,
-    #        "max_query_terms": 52,
-    #        "prefix_length": 4
-    #    }},
-
         "query": {
-            "has_child" : {
-                "type" : "annotation",
-                    "query" :  {"flt": {
-                        "fields": ["text"],
-                        "like_text": q,
-                        "max_query_terms": 52,
-                        "prefix_length": 4
-                    }},
-            }
-        },
-        "fields": ["_parent","_source"],
 
-      #  "aggs" : {
-      #      #"unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
-      #      "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
-      #      #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
-      #  },
+            "has_child": {
+                "type": "annotation",
+                "query": {
+                    "filtered":{
+                        "query": {
+                            "flt": {
+                                "fields": ["text"],
+                                "like_text": q,
+                                "max_query_terms": 52,
+                                "prefix_length": 4
+                            },
+                        },
+
+                        "filter": {
+                        }
+                    }
+
+            }
+        }},
 
         "aggs": {
-            "parent_id": {
-                "terms": { 
-                    "field": "_parent",
-                    "size": 50
+            "contents" : {
+                "children": {
+                    "type": "annotation"
                 },
-                "aggs": {
-                    "bigrams" : {"significant_terms" : {"field" : "text", "size": 30, "gnd": {}}},
-                }
+            "aggs": {
+                "bigrams": {
+                    "terms":{
+                        "field": "text.bigrams"
+                    }
+
             }
         }
+    }}
 
     }
     if t:
-        query['query'] = {
-            "filtered": {
-                "query": {
-                    "flt": {
-                        "fields": ["text"],
-                        "like_text": q,
-                        "max_query_terms": 52,
-                        "prefix_length": 4
-                    }
-                },
-                "filter": {
-                    "and": [{ "isPartOf.@type": { "value": t}},]
-                }
-            }
-        }
-
+        query['query']["has_child"]["query"]["filtered"]["filter"].update({"and": [{ "term": {"@type": t}}]})
     if n:
         n = int(n)
         query['size'] = str(n)
