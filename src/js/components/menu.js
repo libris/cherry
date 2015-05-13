@@ -40,24 +40,30 @@ module.exports = React.createClass({
           <ul className="main-nav">
             <li className={trendClasses}>
               <a href="/trends">Andra läser</a>
-              <ul className="sub-nav">
-                {trends}
-              </ul>
+              <div className="sub-nav-container">
+                <ul className="sub-nav">
+                  {trends}
+                </ul>
+              </div>
             </li>
             <li className={improveClasses}>
               <a href="/improve">Förkovra dig</a>
-              <ul className="sub-nav">
-                <li>frö</li>
-                <li>frö</li>
-              </ul>
+              <div className="sub-nav-container">
+                <ul className="sub-nav">
+                  <li>frö</li>
+                  <li>frö</li>
+                </ul>
+              </div>
             </li>
             <li className={derailClasses}>
               <a href="/derail">Spåra ur</a>
-              <ul className="sub-nav">
-                <li>frö</li>
-                <li>ninja</li>
-                <li>frö</li>
-              </ul>
+              <div className="sub-nav-container">
+                <ul className="sub-nav">
+                  <li>frö</li>
+                  <li>ninja</li>
+                  <li>frö</li>
+                </ul>
+              </div>
             </li>
           </ul>
         </div>

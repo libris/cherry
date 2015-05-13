@@ -146,17 +146,21 @@ body{background:$bg-color;margin: 0;
     &.active {
       background-color: $red;
       text-decoration: underline;
-      .sub-nav {
-        width: 100%;
-        margin: 0px;
-        padding: 5px 0px;
-        display: block;
-        white-space: nowrap;
-        overflow-x: auto;
-        list-style-type: none;
-        li {
-          display: inline-block;
-          padding: 5px 10px;
+      .sub-nav-container {
+        overflow: hidden;
+        .sub-nav {
+          width: 100%;
+          height: 100%;
+          margin: 0px;
+          padding: 5px 0px;
+          display: block;
+          white-space: nowrap;
+          overflow: auto;
+          list-style-type: none;
+          li {
+            display: inline-block;
+            padding: 5px 10px;
+          }
         }
       }
     }
