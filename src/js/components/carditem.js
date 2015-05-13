@@ -1,6 +1,5 @@
 var React = require('react')
 var ImageComponent = require('ainojs-react-image')
-var CreatorName = require('./creatorname')
 var _ = require('underscore')
 var utils = require('../utils')
 
