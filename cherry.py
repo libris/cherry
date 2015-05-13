@@ -25,7 +25,6 @@ from external import Twitter, Google, all_trends
 from elasticsearch import Elasticsearch
 from nltk.metrics import edit_distance
 from os.path import commonprefix
-import search
 
 pp = pprint.PrettyPrinter(indent=1)
 #es = Elasticsearch('localhost', sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
@@ -226,7 +225,7 @@ def api_flt():
     if ident:
         excluded_ids.append(ident)
 
-    result = search.do_flt_query(es, request.args, index_name=app.config['CHERRY'])
+    result = do_flt_query(request.args)
     #return json.dumps(result)
     qmeta = {"executed":query, "relatedPhrases":get_related_phrases_from_query_result(result, query)}
 
@@ -618,6 +617,87 @@ def child_texts(index_name, p):
     return texts
 
 def do_flt_query(args, index_name=app.config['CHERRY']):
+    """Will search annotations if no other doctype is given."""
+    size=args.get('size')
+    q = args.get('q')
+    i = args.get('i')
+    #doctype = args.get('doctype', ['excerpt'])
+    doctype = args.get('doctype')
+    frm = args.get('frm')
+    to= args.get('to')
+    sort= args.get('sort')
+    t = args.get('t')
+    n = args.get('n')
+    f = args.get('f')
+    page = args.get('page')
+
+    n = 50
+    date_filter = []
+    precision = 'y'
+
+    if i:
+        try:
+            q = child_texts(index_name, i)
+        except:
+            print("no record with id: ", i)
+            return {"err": 1, "msg": "Ingen post med angivet id"}
+
+    query = {
+        "sort" : [],
+        "size" : size,
+
+        "query" :  {"flt": {
+            "fields": ["text"],
+            "like_text": q,
+            "max_query_terms": 52,
+            "prefix_length": 4
+        }},
+
+        "fields": ["_parent","_source"],
+
+        "aggs" : {
+            #"unigrams" : {"significant_terms" : {"field" : "text.unigrams", "size": 30, "gnd": {}}},
+            "bigrams" : {"significant_terms" : {"field" : "text.bigrams", "size": 30, "gnd": {}}},
+            #"bigrams_gnd" : {"significant_terms" : {"field" : "text.shingles", "size": 10}},
+        }
+    }
+    if t:
+        query['query'] = {
+            "filtered": {
+                "query": {
+                    "flt": {
+                        "fields": ["text"],
+                        "like_text": q,
+                        "max_query_terms": 52,
+                        "prefix_length": 4
+                    }
+                },
+                "filter": {
+                    "and": [{ "isPartOf.@type": { "value": t}},]
+                }
+            }
+        }
+
+    if n:
+        n = int(n)
+        query['size'] = str(n)
+
+    if page:
+        print("page")
+        query['from'] = n * int(page)
+        print("the from", query['from'])
+
+
+
+
+    if f:
+        query['_source'] = f.split(',')
+
+    r = es.search(body=query, index=index_name, doc_type=doctype)
+    return r
+
+
+def old_do_flt_query(args, index_name=app.config['CHERRY']):
     """Will search annotations if no other doctype is given."""
     size=args.get('size')
     q = args.get('q')
