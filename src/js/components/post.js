@@ -72,20 +72,18 @@ module.exports = React.createClass({
 
 
     var annotation = _.find(post.get('annotation'), function (item){
-      return item['@type'] == 'Summary'
+      return item['@type'] === 'Summary'
     })
 
     var coverClasses = ['cover']
     this.state.coverFolded && coverClasses.push('folded')
 
     var blogPosts = post.get('annotation').filter(function (item){
-      return item['@type'] == 'BlogPosting'
+      return item['@type'] === 'BlogPosting'
     })
 
     var opinions = blogPosts.map(function (item, i) {
-      if (item['@type'] === 'BlogPosting') {
-        return <Opinion key={i} data={item} />
-      }
+      return <Opinion key={i} data={item} />
     })
     var opinionClasses = ['opinionList']
     if(blogPosts.length < 1) {
