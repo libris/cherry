@@ -2,7 +2,6 @@ var React = require('react')
 var posts = require('../collections').get('posts')
 var Data = require('../data')
 var ImageComponent = require('ainojs-react-image')
-var CreatorName = require('./creatorname')
 var Opinion = require('./opinion')
 var KeywordBar = require('./keywordbar')
 var utils = require('../utils')
@@ -117,7 +116,9 @@ module.exports = React.createClass({
             <div className="text-container">
     			    <h1>{ post.get('title') }</h1>
     			    <h2>
-                <CreatorName creator={ post.get('creator') } />
+                <div className="creatorName">
+                { utils.getCreatorList(post.get('creator')).join(', ') }
+                </div>
               </h2>
               <p className="providerDate">{ post.get('publication')[0].providerDate }</p>
               <i className="fa fa-2x fa-quote-right"></i>
