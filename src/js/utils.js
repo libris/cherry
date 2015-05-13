@@ -4,6 +4,9 @@ var _ = require('underscore')
 module.exports = {
 
   splitTextApprox: function (text, approxLength) {
+  	// Returns an array of strings with the text parameter split at approximately the approxLength parameter.
+  	// Will only split between words
+
     var split = []
     var marker = approxLength
     while(marker < text.length && text[marker] !== ' ')
@@ -13,22 +16,18 @@ module.exports = {
     return split
   },
   getCreatorList: function (creatorObj) {
-  	
-  	if(typeof creatorObj === 'undefined') return null
+  	// Returns an array of strings with the creator name(s).
 
+  	if(typeof creatorObj === 'undefined') return null
 		var composeName = function (author) {
       if(author['@type'] == 'Person'){
         if (!author.givenName && !author.familyName)
           return ''
-
         return [author.givenName, author.familyName].join(' ');
-      } else if(author['@type'] == 'Organization'){
+      } else if(author['@type'] == 'Organization')
         return author.name;
-      }
     }
-
     var creatorList = []
-
     if(_.isArray(creatorObj)){
       _.each(creatorObj, function (item) {
         creatorList.push(composeName(item))
@@ -36,7 +35,6 @@ module.exports = {
     } else {
       creatorList.push(composeName(creatorObj))
     }
-
     return creatorList;
   }
   
