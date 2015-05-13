@@ -147,6 +147,7 @@ body{background:$bg-color;margin: 0;
       background-color: $red;
       text-decoration: underline;
       .sub-nav-container {
+        display: inline;
         overflow: hidden;
         .sub-nav {
           width: 100%;
