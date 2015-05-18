@@ -4,17 +4,15 @@
 	margin-right: 6%;
 	margin-top: 10px;
 	@include breakpoint('tablet-portrait') {
-		width: 26%;
+		width: 31%;
+    margin-right: 1%;
     margin-bottom: 15px;
 	}
 	@include breakpoint('desktop') {
-    // width: 330px;
-    // margin-right: 30px;
     margin-bottom: 15px;
-		width: 17%;
-		margin-right: 2%;
+		width: 18%;
+		margin-right: 1%;
 	}
-	// box-shadow: 0px 5px 0px 0px $grey;
  	text-decoration: none;
  	color: $dark-grey;
   .information {
