@@ -25,6 +25,11 @@ body{background:$bg-color;margin: 0;
   @include antialias();
 }
 
+.hit {
+  @include breakpoint('tablet-portrait') {
+    margin-left: 2%;
+  }
+}
 .image-container {
   background: rgba(0,0,0,.05);
   overflow: hidden;
