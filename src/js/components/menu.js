@@ -17,25 +17,27 @@ module.exports = React.createClass({
         improveClasses = [],
         derailClasses = []
 
-    if(this.props.section === 'trends')
-        trendClasses.push('active')
-    else if(this.props.section === 'improve')
-        improveClasses.push('active')
-    else if(this.props.section === 'derail')
-        derailClasses.push('active')
-
-    if (this.props.section == 'trends')
-
     var trends = collections.get('trending').map(function(model, i) {
       var topic = model.get('topic')
       var href = '/trends/?' + Query.stringify({ q: topic })
       var classNames = []
       if ( this.props.section == 'trends' && topic == this.props.q )
-      	classNames.push('active')
+        classNames.push('active')
       return <li className={classNames.join(' ')}><a href={href} key={i+topic}>{topic}</a></li>
     }, this)
 
-    var keyWords = trends
+    if(this.props.section === 'trends') {
+      trendClasses.push('active')
+      var keyWords = trends
+    }
+    else if(this.props.section === 'improve') {
+      improveClasses.push('active')
+      var keyWords = "Topics för 'Förkovra dig'"
+    }
+    else if(this.props.section === 'derail') {
+      derailClasses.push('active')
+      var keyWords = "Topics för 'Spåra ur'"
+    }
 
     return (
         <div className="menu">
