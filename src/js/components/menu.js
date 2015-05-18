@@ -35,37 +35,26 @@ module.exports = React.createClass({
       return <li className={classNames.join(' ')}><a href={href} key={i+topic}>{topic}</a></li>
     }, this)
 
+    var keyWords = trends
+
     return (
         <div className="menu">
           <ul className="main-nav">
             <li className={trendClasses}>
               <a href="/trends">Andra läser</a>
-              <div className="sub-nav-container">
-                <ul className="sub-nav">
-                  {trends}
-                </ul>
-              </div>
             </li>
             <li className={improveClasses}>
               <a href="/improve">Förkovra dig</a>
-              <div className="sub-nav-container">
-                <ul className="sub-nav">
-                  <li>frö</li>
-                  <li>frö</li>
-                </ul>
-              </div>
             </li>
             <li className={derailClasses}>
               <a href="/derail">Spåra ur</a>
-              <div className="sub-nav-container">
-                <ul className="sub-nav">
-                  <li>frö</li>
-                  <li>ninja</li>
-                  <li>frö</li>
-                </ul>
-              </div>
             </li>
           </ul>
+          <div className="sub-nav-container">
+            <ul className="sub-nav">
+              {keyWords}
+            </ul>
+          </div>
         </div>
     )
   }
