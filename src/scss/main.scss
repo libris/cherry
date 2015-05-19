@@ -213,5 +213,5 @@ body{background:$bg-color;margin: 0;
   margin: auto;
 }
 .hidden {
-  display: none;
+  display: none !important;
 }
