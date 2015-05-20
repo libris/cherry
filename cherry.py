@@ -165,7 +165,15 @@ def api_search():
     #HERE is the elastic search call
     r = es.search(body=query, index=app.config['CHERRY'], doc_type='record')
     app.logger.debug("did search {0}".format(time.time() - t0))
-    return json.dumps(r)
+    #return json.dumps(r)
+    items = []
+    for h in r['hits']['hits']:
+        h['_source']['identifier'] = h['_id']
+        h["_source"]["coverArt"] = find_preferred_cover(h['_id']) #add to query: must have cover
+        h["_source"]['annotation'] = find_children('annotation', h['_id'])
+        items.append(h['_source'])
+
+    return json_response({ "@context":"/cherry.jsonld", "items": items })
 
     rtext = r
     if rtext.get('status', 0):
