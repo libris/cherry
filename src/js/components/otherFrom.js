@@ -45,7 +45,6 @@ module.exports = React.createClass({
     var content = (_.isArray(titles) ? titles : []).map(function(item, i) {
     	// if (item.identifier === parentBook) console.log('dupe', parentBook, item.identifier)
     	if (item.coverArt && item.identifier !== parentBook) {
-    		console.log("Found " + item.identifier)
     		return <CardItem key={i+':'+item['@id']} data={item} />
     	}
     })
