@@ -1,16 +1,16 @@
 var React = require('react')
 var posts = require('../collections').get('posts')
+var search = require('../collections').get('search')
 var Data = require('../data')
 var ImageComponent = require('ainojs-react-image')
 var Opinion = require('./opinion')
 var KeywordBar = require('./keywordbar')
+var OtherFrom = require('./otherFrom')
 var utils = require('../utils')
-var collections = require('../collections')
 var _ = require('underscore')
 
 module.exports = React.createClass({
 
-	
 	mixins: [ Data.mixin ],
 
 	getDataDependencies: function() {
@@ -21,6 +21,7 @@ module.exports = React.createClass({
 	},
 
 	getInitialState: function() {
+
 		return {
       loading: true,
       coverFolded: true,
@@ -46,13 +47,14 @@ module.exports = React.createClass({
   },
 
   render: function() {
-  	
+  
   	if ( this.state.loading ) {
-      return <p>loading</p>
+      return <p>Laddar post...</p>
   	}
-  	var post = posts.getModel({
-  		'identifier': this.props.route.params[0]
-  	})
+    
+    var post = posts.getModel({
+      'identifier': this.props.route.params[0]
+    })
 
     // Excerpt
     var excerpt = _.find(post.get('excerpt'), function (item) {
@@ -99,9 +101,14 @@ module.exports = React.createClass({
       opinionClasses.push('hidden')
     }
 
+    // Other from
+    var creatorSearchTerm = utils.getCreatorList(post.get('creator')).join(' ')
+    var otherFromLimit = 2
+    if (blogPosts.length < 1)
+      otherFromLimit = 4
+
     // Related words
     var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
-    console.log(this.props.route)
 
 
     return (
@@ -142,19 +149,14 @@ module.exports = React.createClass({
               </div>
               {opinions}
             </div>
-            <div className="extraList">
-              <div className="text-container">
-                <h1>Andra titlar från:</h1>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-              </div>
-            </div>
+            <OtherFrom author={creatorSearchTerm} limit={otherFromLimit} />
           </div>
         </div>
         <div className="info-section related">
           <div className="container">
             <div className="text-container">
               <h1>Relaterade titlar</h1>
-              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+              <p>...</p>
             </div>
           </div>
         </div>

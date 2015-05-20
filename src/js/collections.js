@@ -17,5 +17,11 @@ module.exports = CollectionFactory({
     getCollectionList: function(result) {
       return [result]
     }
+  },
+  search: {
+    dataUrl: '/api/search',
+    getCollectionList: function(result) {
+      return [result]
+    }
   }
 })

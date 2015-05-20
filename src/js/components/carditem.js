@@ -9,6 +9,7 @@ module.exports = React.createClass({
   },
   render: function() {
     var data = this.props.data
+
     var summary = ''
     // return <div>{data['@id']}</div>
     var filtered = data.annotation.filter(function (item){
