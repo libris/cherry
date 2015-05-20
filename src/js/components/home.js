@@ -106,7 +106,7 @@ module.exports = React.createClass({
     function next() {
       if ( i<more ) {
         var hit = hits.at(hits.length-1)
-        console.log('QUERY', hit.get('query'))
+        // console.log('QUERY', hit.get('query'))
         topic = hit.get('query').relatedWords.splice(0,3).join(' ')
         i++
         sow()
@@ -129,7 +129,7 @@ module.exports = React.createClass({
         this.setState({
           q: topic
         }, function() {
-          console.log('q', this.state.q)
+          // console.log('q', this.state.q)
           this.plant( topic )
         })
       }

@@ -44,5 +44,5 @@ var Router = Backbone.Router.extend({
 })
 
 var router = new Router()
-console.log('router', router)
+// console.log('router', router)
 module.exports = router
