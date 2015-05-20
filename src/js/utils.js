@@ -36,6 +36,12 @@ module.exports = {
       creatorList.push(composeName(creatorObj))
     }
     return creatorList;
-  }
+  },
+  hasDefinedItems: function(array) {
+    for( var i = 0; i < array.length ; i++)
+      if (typeof array[i] !== 'undefined') return true
+
+    return false
+  },
   
 }

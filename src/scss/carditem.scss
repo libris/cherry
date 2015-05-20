@@ -47,8 +47,18 @@
   border: 1px solid #F0F0F0;
 }
 .otherFrom.full .cardItem {
-  width: 23%;
-  margin-right: 1%;
+  @include breakpoint('desktop') {
+    width: 23%;
+    margin-right: 1%;
+  }
   float: left;
   border: 1px solid #F0F0F0;  
+}
+.otherFrom.full .cardItem {
+  display: none;
+  &:nth-child(2) {display: block}
+  &:nth-child(3) {display: block}
+  @include breakpoint('desktop') {
+    display: block;
+  }
 }

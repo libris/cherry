@@ -149,7 +149,7 @@ module.exports = React.createClass({
               </div>
               {opinions}
             </div>
-            <OtherFrom author={creatorSearchTerm} limit={otherFromLimit} />
+            <OtherFrom author={creatorSearchTerm} limit={otherFromLimit} current={post.get('identifier')} />
           </div>
         </div>
         <div className="info-section related">

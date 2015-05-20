@@ -4,6 +4,7 @@ var search = require('../collections').get('search')
 var Data = require('../data')
 var CardItem = require('./cardItem')
 var _ = require('underscore')
+var utils = require('../utils')
 
 
 module.exports = React.createClass({
@@ -40,9 +41,13 @@ module.exports = React.createClass({
     }
     titles = titles[0]
 
+    parentBook = this.props.current
     var content = (_.isArray(titles) ? titles : []).map(function(item, i) {
-    	if (item.coverArt)
-      	return <CardItem key={i+':'+item['@id']} data={item} />
+    	// if (item.identifier === parentBook) console.log('dupe', parentBook, item.identifier)
+    	if (item.coverArt && item.identifier !== parentBook) {
+    		console.log("Found " + item.identifier)
+    		return <CardItem key={i+':'+item['@id']} data={item} />
+    	}
     })
 
     if(content.length > this.props.limit)
@@ -51,17 +56,21 @@ module.exports = React.createClass({
     return content
 	},
   render: function() {
-    
+
 		var classNames = ['otherFrom']
+
+		var renderedItems = this.renderItems()
+		if (!this.state.loading && !utils.hasDefinedItems(renderedItems))
+			classNames.push('hidden')
 
 		if (this.state.limit >= 4)
     	classNames.push('full')
 
     return (
-      <div className={classNames.join(' ')}>
+      <div className={classNames.join(' ') }>
       	<div className="text-container">
         	<h1>Andra titlar från:</h1>
-      		{ this.renderItems() }
+      		{ renderedItems }
       	</div>
       </div>
     )
