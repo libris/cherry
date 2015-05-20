@@ -5,6 +5,7 @@ var ImageComponent = require('ainojs-react-image')
 var Opinion = require('./opinion')
 var KeywordBar = require('./keywordbar')
 var utils = require('../utils')
+var collections = require('../collections')
 var _ = require('underscore')
 
 module.exports = React.createClass({
@@ -53,44 +54,23 @@ module.exports = React.createClass({
   		'identifier': this.props.route.params[0]
   	})
 
-    var postMock = {
-      title : 'Testpost',
-      creator : {
-        givenName : 'Test',
-        familyName : 'Testsson'
-      },
-      coverArt : {
-        url : "http://galleria.io/static/i/s2013/2m.jpg",
-        width : 220,
-        height : 160
-      },
-      publication : {
-        providerDate : 2054
-      }
+    // Excerpt
+    var excerpt = _.find(post.get('excerpt'), function (item) {
+      return item.annotationSource.name === 'Smakprov'
+    })
+    var tasteClasses = ['taste']
+    if(typeof excerpt !== 'undefined') {
+      var urlParts = excerpt.annotationSource.url.split('/')
+      var id = urlParts[urlParts.length - 1]
+      var tasteUrl = 'http://www.smakprov.se/smakprov/visa/' + id
+    } else {
+      tasteClasses.push('hidden')
     }
-    var coverArt = post.get('coverArt')[0]
 
-
+    // Summary
     var annotation = _.find(post.get('annotation'), function (item){
       return item['@type'] === 'Summary'
     })
-
-    var coverClasses = ['cover']
-    this.state.coverFolded && coverClasses.push('folded')
-
-    var blogPosts = post.get('annotation').filter(function (item){
-      return item['@type'] === 'BlogPosting'
-    })
-
-    var opinions = blogPosts.map(function (item, i) {
-      return <Opinion key={i} data={item} />
-    })
-    var opinionClasses = ['opinionList']
-    if(blogPosts.length < 1) {
-      opinionClasses.push('hidden')
-    }
-    var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
-
     var summaryClasses = ['quote']
     var summaryTexts = []
     if(typeof annotation !== 'undefined' && typeof annotation.text !== 'undefined') {
@@ -98,10 +78,31 @@ module.exports = React.createClass({
       summaryTexts = utils.splitTextApprox(annotation.text, splitAt)
       if (annotation.text.length > splitAt)
         this.state.summaryFolded && summaryClasses.push('folded')
-
     } else {
       summaryTexts = ['','']
     }
+
+    // Cover
+    var coverArt = post.get('coverArt')[0]
+    var coverClasses = ['cover']
+    this.state.coverFolded && coverClasses.push('folded')
+
+    // Blog posts
+    var blogPosts = post.get('annotation').filter(function (item){
+      return item['@type'] === 'BlogPosting'
+    })
+    var opinions = blogPosts.map(function (item, i) {
+      return <Opinion key={i} data={item} />
+    })
+    var opinionClasses = ['opinionList']
+    if(blogPosts.length < 1) {
+      opinionClasses.push('hidden')
+    }
+
+    // Related words
+    var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
+    console.log(this.props.route)
+
 
     return (
     	<div className="detailView">
@@ -126,9 +127,9 @@ module.exports = React.createClass({
                 
                 <span className="readMore">...<a href="#" onClick={this.toggleSummary}> Läs mer</a></span>
                 
-                <button className="taste">
+                <a href={tasteUrl} target="_blank" className={tasteClasses.join(' ')}>
                   Kolla ett smakprov!
-                </button>
+                </a>
               </p>
             </div>
           </div>

@@ -13,39 +13,50 @@ module.exports = React.createClass({
 
   render: function() {
 
+    var trendClasses = [],
+        improveClasses = [],
+        derailClasses = []
+
     var trends = collections.get('trending').map(function(model, i) {
       var topic = model.get('topic')
       var href = '/trends/?' + Query.stringify({ q: topic })
       var classNames = []
       if ( this.props.section == 'trends' && topic == this.props.q )
-      	classNames.push('active')
+        classNames.push('active')
       return <li className={classNames.join(' ')}><a href={href} key={i+topic}>{topic}</a></li>
     }, this)
+
+    if(this.props.section === 'trends') {
+      trendClasses.push('active')
+      var keyWords = trends
+    }
+    else if(this.props.section === 'improve') {
+      improveClasses.push('active')
+      var keyWords = "Topics för 'Förkovra dig'"
+    }
+    else if(this.props.section === 'derail') {
+      derailClasses.push('active')
+      var keyWords = "Topics för 'Spåra ur'"
+    }
 
     return (
         <div className="menu">
           <ul className="main-nav">
-            <li className="">
-              Andra läser
-              <ul className="sub-nav">
-                <li>frö</li>
-                <li>frö</li>
-              </ul>
+            <li className={trendClasses}>
+              <a href="/trends">Andra läser</a>
             </li>
-            <li className="active">
-              Förkovra dig
-              <ul className="sub-nav">
-                {trends}
-              </ul>
+            <li className={improveClasses}>
+              <a href="/improve">Förkovra dig</a>
             </li>
-            <li className="">
-              Spåra ur
-              <ul className="sub-nav">
-                <li>frö</li>
-                <li>frö</li>
-              </ul>
+            <li className={derailClasses}>
+              <a href="/derail">Spåra ur</a>
             </li>
           </ul>
+          <div className="sub-nav-container">
+            <ul className="sub-nav">
+              {keyWords}
+            </ul>
+          </div>
         </div>
     )
   }

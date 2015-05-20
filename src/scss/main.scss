@@ -25,6 +25,11 @@ body{background:$bg-color;margin: 0;
   @include antialias();
 }
 
+.hit {
+  @include breakpoint('tablet-portrait') {
+    margin-left: 1%;
+  }
+}
 .image-container {
   background: rgba(0,0,0,.05);
   overflow: hidden;
@@ -91,7 +96,7 @@ body{background:$bg-color;margin: 0;
   padding: 20px 0px 10px;
   width: 100%;
 	font-size: 12pt;
-  overflow: scroll;
+  overflow: auto;
   margin-top: 20px;
   border-top: 1px solid #ddd;
 }
@@ -128,8 +133,8 @@ body{background:$bg-color;margin: 0;
   list-style-type: none;
   background-color: $pale-red;
   &>li {
-    margin: 14px 0px;
-    width: 33%;
+    margin: 14px 1.5%;
+    width: 30%;
     background-color: $pale-red;
     display: inline-block;
     text-decoration: none;
@@ -139,22 +144,13 @@ body{background:$bg-color;margin: 0;
     text-align: center;
     font-size: 12pt;
     font-family: $font-headers;
+    a {
+      color: #fff;
+      text-decoration: none;
+    }
     &.active {
       background-color: $red;
       text-decoration: underline;
-      .sub-nav {
-        width: 100%;
-        margin: 0px;
-        padding: 5px 0px;
-        display: block;
-        white-space: nowrap;
-        overflow-x: auto;
-        list-style-type: none;
-        li {
-          display: inline-block;
-          padding: 5px 10px;
-        }
-      }
     }
     &.top {
       background-color: $pale-orange;
@@ -165,26 +161,35 @@ body{background:$bg-color;margin: 0;
     &.trends {
       background-color: $pale-brown;
     }
-    .sub-nav {
-      text-align: left;
-      display: none;
-      position: absolute;
-      left: 0px;
-      top: 70px;
-      li {
-        font-family: $font-content;
-        font-weight: 700;
-        background-color: $blue;
-        border-radius: 5px;
-        margin: 0px 5px;
-        &.active {
-          background-color: $dark-grey;
-          text-decoration: underline;
-        }
-        a {
-          text-decoration: none;
-          color: #fff;
-        }
+  }
+}
+.sub-nav-container {
+  overflow: hidden;
+  height: 47px;
+  .sub-nav {
+    text-align: left;
+    margin: 10px 0px;
+    width: 100%;
+    padding: 5px 0px;
+    display: block;
+    white-space: nowrap;
+    overflow: auto;
+    list-style-type: none;
+    li {
+      display: inline-block;
+      padding: 5px 10px;
+      font-family: $font-content;
+      font-weight: 700;
+      background-color: $blue;
+      border-radius: 5px;
+      margin: 0px 5px;
+      &.active {
+        background-color: $dark-grey;
+        text-decoration: underline;
+      }
+      a {
+        text-decoration: none;
+        color: #fff;
       }
     }
   }
@@ -208,5 +213,5 @@ body{background:$bg-color;margin: 0;
   margin: auto;
 }
 .hidden {
-  display: none;
+  display: none !important;
 }

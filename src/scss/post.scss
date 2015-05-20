@@ -1,6 +1,6 @@
 .detailView {
 
-  .image-container {
+  .summary .image-container {
     box-shadow: 18px 0px 10px -10px rgba(0, 0, 0, 0.15);
   }
   .keywordBar {
@@ -16,15 +16,18 @@
     }
   }
   .taste {
+    text-align: center;
     font-size: 20pt;
     color: $button-white;
     background-color: $button-blue;
     border: 1px solid $button-blue;
     display: block;
+    width: inherit;
     font-family: $font-content;
     margin: 20px auto;
     border-radius: 8px;
     font-weight: 700;
+    text-decoration: none;
   }
 
   .info-section {
@@ -191,11 +194,13 @@
       }
       .readMore { display: none }
       &.folded {
-        .readMore { display: inline }
-        a {
-          font-weight: bold;
-          text-align: right;
-          color: $blue;
+        .readMore {
+          display: inline;
+          a {
+            font-weight: bold;
+            text-align: right;
+            color: $blue;
+          }
         }
       }
   	}

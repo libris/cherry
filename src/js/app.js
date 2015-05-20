@@ -12,8 +12,8 @@ var NotFoundComponent = require('./components/404')
 
 var handlers = {
   trends: HomeComponent,
-  winners: HomeComponent,
-  toplist: HomeComponent,
+  improve: HomeComponent,
+  derail: HomeComponent,
   ord: HomeComponent,
   post: PostComponent,
   404: NotFoundComponent 
