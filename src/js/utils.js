@@ -22,7 +22,10 @@ module.exports = {
 		var composeName = function (author) {
       if(author['@type'] == 'Person'){
         if (!author.givenName && !author.familyName)
-          return ''
+          if(author.name)
+            return [author.name]
+          else
+            return ''
         return [author.givenName, author.familyName].join(' ');
       } else if(author['@type'] == 'Organization')
         return author.name;
