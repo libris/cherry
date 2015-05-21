@@ -47,14 +47,18 @@ module.exports = React.createClass({
   },
 
   render: function() {
-  
+
   	if ( this.state.loading ) {
-      return <p>Laddar post...</p>
+      return <div className="loader"><br/><br/><br/><i className="fa fa-2x fa-circle-o-notch fa-spin"></i></div>
   	}
     
     var post = posts.getModel({
       'identifier': this.props.route.params[0]
     })
+
+    // Triggers reload when navigated to new book without new data
+    if (typeof post === 'undefined')
+      window.location.reload()
 
     // Excerpt
     var excerpt = _.find(post.get('excerpt'), function (item) {
