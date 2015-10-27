@@ -26,7 +26,7 @@ module.exports = React.createClass({
     var items = model.get('items')
     var related = model.get('query').executed.split(' ')
     var cards = (_.isArray(items) ? items : []).map(function(item, i) {
-      return <CardItem key={i+':'+item['@id']} data={item} />
+      return <CardItem key={i+':'+item['@id']} data={item} query={related} />
     })
     var bar = this.props.hideKeywords ? null : <KeywordBar keywords={related} />
     return (

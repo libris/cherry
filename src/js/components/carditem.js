@@ -7,6 +7,17 @@ module.exports = React.createClass({
   getSlug: function() {
     return '/post/'+this.props.data['@id'].replace(/\//g, '')
   },
+  getSlugWithQuery: function() {
+    var query = this.props.query
+    if (typeof query === 'undefined')
+      return '/'
+
+    var queryStr = ''
+    if(query.length >= 1)
+      queryStr = '?q=' + query.join('+')
+
+    return '/post/' + this.props.data['@id'].replace(/\//g, '') + queryStr
+  },
   render: function() {
     var data = this.props.data
 
@@ -24,7 +35,7 @@ module.exports = React.createClass({
     }
     
     return (
-      <a className="cardItem" href={ this.getSlug() }>
+      <a className="cardItem" href={ this.getSlugWithQuery() }>
       	<ImageComponent src={ data.coverArt.url } lazy={true} ratio={ data.coverArt.height / data.coverArt.width} />
       	<div className="information">
       		<h1>{ data.title }</h1>

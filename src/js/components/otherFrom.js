@@ -41,11 +41,13 @@ module.exports = React.createClass({
     }
     titles = titles[0]
 
+    keywords = this.props.keywords
+
     parentBook = this.props.current
     var content = (_.isArray(titles) ? titles : []).map(function(item, i) {
     	// if (item.identifier === parentBook) console.log('dupe', parentBook, item.identifier)
     	if (item.coverArt && item.identifier !== parentBook) {
-    		return <CardItem key={i+':'+item['@id']} data={item} />
+    		return <CardItem key={i+':'+item['@id']} data={item} query={keywords} />
     	}
     })
 

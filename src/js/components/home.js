@@ -37,7 +37,7 @@ module.exports = React.createClass({
     var hits = collections.get('hits')
     return new Promise(function(resolve, reject) {
       collections.get('hits').load({ q: topic }, { append: true }).then(function(response) {
-        if ( !response.items.length || !response.query.relatedWords.length ) {
+        if ( !response.items.length || !response.query.relatedPhrases.length ) {
           reject(topic+' was not suitable for planting')
         } else {
           resolve(topic)
@@ -106,11 +106,11 @@ module.exports = React.createClass({
     function next() {
       if ( i<more ) {
         var hit = hits.at(hits.length-1)
-        // console.log('QUERY', hit.get('query'))
-        topic = hit.get('query').relatedWords.splice(0,3).join(' ')
+        //console.log('QUERY', hit.get('query'))
+        topic = hit.get('query').relatedPhrases.splice(0,3).join(' ')
         i++
         sow()
-      } else {
+      } else if (self) {
         self.setState({ growing: false })
       }
     }
