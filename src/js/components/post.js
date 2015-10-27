@@ -14,9 +14,10 @@ module.exports = React.createClass({
 	mixins: [ Data.mixin ],
 
 	getDataDependencies: function() {
+    var routeParams = this.props.route.params[0].split('?q=')[0]
 		return [{
 			collection: 'posts',
-			query: { q: this.props.route.params[0] }
+			query: { q: routeParams }
 		}]
 	},
 
@@ -53,7 +54,7 @@ module.exports = React.createClass({
   	}
     
     var post = posts.getModel({
-      'identifier': this.props.route.params[0]
+      'identifier': this.props.route.params[0].split('?q=')[0]
     })
 
     // Triggers reload when navigated to new book without new data
@@ -112,8 +113,10 @@ module.exports = React.createClass({
       otherFromLimit = 4
 
     // Related words
-    var related = ['Lorem', 'Ipsum', 'Dolor', 'Sit', 'Amet']
-
+    var related = []
+    var routeParams = this.props.route.params[0]
+    if (routeParams.indexOf('?q=') !== -1)
+      related = routeParams.split('?q=')[1].split('+')
 
     return (
     	<div className="detailView">
@@ -153,7 +156,7 @@ module.exports = React.createClass({
               </div>
               {opinions}
             </div>
-            <OtherFrom author={creatorSearchTerm} limit={otherFromLimit} current={post.get('identifier')} />
+            <OtherFrom author={creatorSearchTerm} keywords={related} limit={otherFromLimit} current={post.get('identifier')} />
           </div>
         </div>
         <div className="info-section related">
