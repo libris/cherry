@@ -537,8 +537,10 @@ def api_children():
 def api_trending():
     t0 = time.time()
     try:
-        with open('trending_topics.txt', encoding='utf-8') as f:
+        here = os.path.dirname(__file__)
+        with open(os.path.join(here, 'trending_topics.txt'), encoding='utf-8') as f:
             topics = eval(f.read())
+        print("Loaded topics from cache file.")
     except Exception as e:
         print("No trend file found. Loading (unchecked) from scratch.")
         topics = all_trends(google, twitter)

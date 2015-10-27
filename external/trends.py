@@ -23,7 +23,6 @@ class Google:
 
     def trends(self, country_id='p42'):
         res = requests.get(self.google_trend_url.format(country_id=country_id), stream=True, timeout=3600, headers={'Accept': 'application/atom+xml'})
-        print("headers", res.headers)
         #xml = etree.parse(res.raw)
         xml = etree.fromstring(res.content)
 
